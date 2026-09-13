@@ -1,0 +1,195 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { AppleModal } from '../common/AppleModal';
+import { Camera, Scan, AlertCircle, Search } from 'lucide-react';
+import { Product } from '../../types';
+
+interface BarcodeScannerModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  products: Product[];
+  onProductScanned: (product: Product) => void;
+}
+
+export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
+  isOpen,
+  onClose,
+  products,
+  onProductScanned,
+}) => {
+  const [manualCode, setManualCode] = useState('');
+  const [cameraActive, setCameraActive] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // USB Barcode Gun Listener
+  useEffect(() => {
+    let buffer = '';
+    let lastKeyTime = Date.now();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+
+      const currentTime = Date.now();
+      if (currentTime - lastKeyTime > 100) {
+        buffer = '';
+      }
+      lastKeyTime = currentTime;
+
+      if (e.key === 'Enter') {
+        if (buffer.length > 2) {
+          matchAndSelect(buffer.trim());
+          buffer = '';
+        }
+      } else if (e.key.length === 1) {
+        buffer += e.key;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, products]);
+
+  const matchAndSelect = (code: string) => {
+    const trimmed = code.trim().toLowerCase();
+    const found = products.find(
+      (p) =>
+        p.barcode?.toLowerCase() === trimmed ||
+        p.sku?.toLowerCase() === trimmed ||
+        p.name.toLowerCase().includes(trimmed)
+    );
+
+    if (found) {
+      onProductScanned(found);
+      setErrorMessage('');
+      setManualCode('');
+      onClose();
+    } else {
+      setErrorMessage(`No product found matching code: "${code}"`);
+    }
+  };
+
+  // Camera initialization
+  const startCamera = async () => {
+    try {
+      setErrorMessage('');
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setCameraActive(true);
+    } catch (err) {
+      console.error(err);
+      setErrorMessage('Unable to access camera. Please enter barcode or SKU manually.');
+      setCameraActive(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    setCameraActive(false);
+  };
+
+  useEffect(() => {
+    if (!isOpen) {
+      stopCamera();
+    }
+  }, [isOpen]);
+
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (manualCode.trim()) {
+      matchAndSelect(manualCode);
+    }
+  };
+
+  return (
+    <AppleModal
+      isOpen={isOpen}
+      onClose={() => {
+        stopCamera();
+        onClose();
+      }}
+      title="Barcode & SKU Scanner"
+      subtitle="Use camera scanner, USB barcode gun or type code"
+      maxWidth="max-w-md"
+    >
+      <div className="space-y-5">
+        {/* Scanner Viewport */}
+        <div className="relative w-full h-56 bg-black/90 rounded-2xl overflow-hidden flex flex-col items-center justify-center border border-gray-800">
+          {cameraActive ? (
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center text-center p-6 space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-white">
+                <Scan className="w-6 h-6 animate-pulse text-[#0071e3]" />
+              </div>
+              <p className="text-xs text-gray-300">
+                Ready for USB Barcode Reader or Web Camera Scan
+              </p>
+              <button
+                onClick={startCamera}
+                className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium transition-all"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>Start Camera Scanner</span>
+              </button>
+            </div>
+          )}
+
+          {/* Scanner Overlay Guide */}
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+            <div className="w-48 h-28 border-2 border-[#0071e3]/80 rounded-xl relative">
+              <div className="absolute inset-x-0 top-1/2 h-0.5 bg-red-500/80 animate-pulse shadow-sm" />
+            </div>
+          </div>
+        </div>
+
+        {/* Error Alert */}
+        {errorMessage && (
+          <div className="flex items-center space-x-2 p-3 rounded-xl bg-red-50 text-red-700 text-xs border border-red-200">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {/* Manual Barcode / SKU entry */}
+        <form onSubmit={handleManualSubmit} className="space-y-3">
+          <label className="block text-xs font-semibold text-gray-600">
+            Manual Barcode / SKU Entry
+          </label>
+          <div className="flex items-center space-x-2">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
+              <input
+                type="text"
+                autoFocus
+                placeholder="Scan or enter Barcode..."
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-xs focus:ring-2 focus:ring-[#0071e3] focus:bg-white focus:outline-none"
+              />
+            </div>
+            <button
+              type="submit"
+              className="px-4 py-2.5 rounded-xl bg-[#0071e3] text-white text-xs font-medium hover:bg-[#0077ed] active:scale-95 transition-all shadow-apple-subtle"
+            >
+              Add Item
+            </button>
+          </div>
+        </form>
+      </div>
+    </AppleModal>
+  );
+};

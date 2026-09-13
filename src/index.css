@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Inter", -apple-system-subheadline, system-ui, sans-serif;
+  color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "tnum";
+}
+
+/* Apple Smooth Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Glassmorphic Apple Surfaces */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.glass-modal {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.glass-input {
+  background: rgba(245, 245, 247, 0.75);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-input:focus {
+  background: #ffffff;
+  border-color: #000000;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12);
+  outline: none;
+}
+
+/* Hide ugly browser number spinners for clean spreadsheet look */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+.apple-button-primary {
+  background: #000000;
+  color: #ffffff;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apple-button-primary:hover {
+  background: #171717;
+  transform: scale(1.01);
+}
+
+.apple-button-primary:active {
+  transform: scale(0.98);
+}
+
+/* Print Media Styles for Invoices & Thermal Receipts */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .no-print,
+  aside,
+  header,
+  nav,
+  button,
+  .toast,
+  .print-hide {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+  }
+
+  .printable-thermal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm !important;
+    margin: 0 !important;
+    padding: 4mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    font-size: 11px !important;
+  }
+
+  @page {
+    margin: 6mm;
+  }
+}
