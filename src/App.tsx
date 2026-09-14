@@ -36,6 +36,7 @@ import { calculateInvoiceTotals } from './services/gstCalculator';
 import { formatINR, formatDate, getLocalDateISO } from './utils/formatters';
 import { Plus, ArrowDownLeft, CheckCircle2, ShoppingBag, Receipt, ArrowRight } from 'lucide-react';
 import { UserProfile } from './types';
+import { App as CapApp } from '@capacitor/app';
 
 export const App: React.FC = () => {
   // 1. Core Data States from local database
@@ -102,6 +103,60 @@ export const App: React.FC = () => {
       setPaymentForm((prev) => ({ ...prev, customerId: customers[0].id }));
     }
   }, [customers, paymentForm.customerId]);
+
+  // Android Tablet Hardware Back Button Handler via Capacitor
+  useEffect(() => {
+    let listener: any = null;
+    const initBackButton = async () => {
+      try {
+        listener = await CapApp.addListener('backButton', ({ canGoBack }) => {
+          if (isAddSaleOpen) {
+            setIsAddSaleOpen(false);
+            setEditingInvoice(null);
+            return;
+          }
+          if (isAddPurchaseOpen) {
+            setIsAddPurchaseOpen(false);
+            return;
+          }
+          if (isReceivePaymentOpen) {
+            setIsReceivePaymentOpen(false);
+            return;
+          }
+          if (selectedInvoiceForPreview) {
+            setSelectedInvoiceForPreview(null);
+            return;
+          }
+          if (isAppInfoOpen) {
+            setIsAppInfoOpen(false);
+            return;
+          }
+          if (currentTab !== 'home') {
+            setCurrentTab('home');
+            return;
+          }
+          if (!canGoBack) {
+            CapApp.exitApp();
+          }
+        });
+      } catch {
+        // Fallback gracefully in standard web browser
+      }
+    };
+    initBackButton();
+    return () => {
+      if (listener && typeof listener.remove === 'function') {
+        listener.remove();
+      }
+    };
+  }, [
+    isAddSaleOpen,
+    isAddPurchaseOpen,
+    isReceivePaymentOpen,
+    selectedInvoiceForPreview,
+    isAppInfoOpen,
+    currentTab,
+  ]);
 
   // Reload data helper
   const reloadData = useCallback(() => {

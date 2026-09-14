@@ -141,3 +141,24 @@ input[type="number"] {
     margin: 6mm;
   }
 }
+
+/* Android Safe Area & Touch Optimizations */
+html, body {
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+.android-safe-top {
+  padding-top: max(env(safe-area-inset-top, 0px), 0px);
+}
+
+.android-safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
+}

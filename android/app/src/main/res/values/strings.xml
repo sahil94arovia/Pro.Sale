@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PROSALE</string>
+    <string name="title_activity_main">PROSALE</string>
+    <string name="package_name">com.prosale.app</string>
+    <string name="custom_url_scheme">com.prosale.app</string>
+</resources>

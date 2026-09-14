@@ -22,3 +22,20 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Android Build Artifacts & Caches
+.gradle/
+android/.gradle/
+android/app/build/
+android/build/
+android/.idea/
+android/local.properties
+*.apk
+*.aab
+
+# Android Signing Keys & Credentials (NEVER COMMIT TO GIT)
+*.jks
+*.keystore
+keystore.properties
+android/keystore.properties
+android/app/keystore.properties
