@@ -28,6 +28,9 @@ import { CashBankView } from './components/cashbank/CashBankView';
 import { UtilitiesView } from './components/utilities/UtilitiesView';
 import { AppleModal } from './components/common/AppleModal';
 import { AppInfoModal } from './components/common/AppInfoModal';
+import { UpdateAvailableModal } from './components/common/UpdateAvailableModal';
+import { updateService } from './services/updateService';
+import { AppUpdateInfo } from './types/update';
 import { OnboardingFlow } from './components/onboarding/OnboardingFlow';
 import { PlansPricingView } from './components/pricing/PlansPricingView';
 import { TrialExpiredModal } from './components/common/TrialExpiredModal';
@@ -75,6 +78,31 @@ export const App: React.FC = () => {
   const [isReceivePaymentOpen, setIsReceivePaymentOpen] = useState(false);
   const [selectedInvoiceForPreview, setSelectedInvoiceForPreview] = useState<Invoice | null>(null);
   const [isAppInfoOpen, setIsAppInfoOpen] = useState(false);
+  const [availableUpdate, setAvailableUpdate] = useState<AppUpdateInfo | null>(null);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+
+  // Background update check on app launch (runs once, strictly obeys 12-hour cooldown)
+  useEffect(() => {
+    let isMounted = true;
+    const runBackgroundUpdateCheck = async () => {
+      try {
+        const result = await updateService.checkForUpdates(false);
+        if (!isMounted) return;
+        if (result.status === 'UPDATE_AVAILABLE' && result.updateInfo) {
+          setAvailableUpdate(result.updateInfo);
+          setIsUpdateModalOpen(true);
+        }
+      } catch {
+        // Silently ignore errors during background check
+      }
+    };
+
+    const timer = setTimeout(runBackgroundUpdateCheck, 3000);
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, []);
 
   // Quick Purchase Voucher Form State
   const [purchaseForm, setPurchaseForm] = useState({
@@ -693,6 +721,10 @@ export const App: React.FC = () => {
           onImportBackup={handleImportBackup}
           onClearAllData={handleClearAllData}
           onOpenAppInfo={() => setIsAppInfoOpen(true)}
+          onOpenUpdateModal={(info) => {
+            setAvailableUpdate(info);
+            setIsUpdateModalOpen(true);
+          }}
         />
       ) : (
         /* Dedicated Plans & Pricing View */
@@ -1072,6 +1104,17 @@ export const App: React.FC = () => {
         expenses={expenses}
         quotations={quotations}
         challans={challans}
+        onOpenUpdateModal={(info) => {
+          setAvailableUpdate(info);
+          setIsUpdateModalOpen(true);
+        }}
+      />
+
+      {/* Manual APK Update Modal */}
+      <UpdateAvailableModal
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        updateInfo={availableUpdate}
       />
 
       {/* Strict 6-Day Trial Expiration Modal */}

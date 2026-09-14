@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { AppleModal } from './AppleModal';
 import { BusinessSettings, Invoice, Customer, Product, Expense, Quotation, DeliveryChallan } from '../../types';
 import { formatINR } from '../../utils/formatters';
+import { updateService } from '../../services/updateService';
+import { AppUpdateInfo } from '../../types/update';
 import {
   ShieldCheck,
   Cpu,
@@ -12,6 +14,7 @@ import {
   Info,
   Server,
   Zap,
+  Download,
 } from 'lucide-react';
 
 interface AppInfoModalProps {
@@ -24,6 +27,7 @@ interface AppInfoModalProps {
   expenses: Expense[];
   quotations: Quotation[];
   challans: DeliveryChallan[];
+  onOpenUpdateModal?: (info: AppUpdateInfo) => void;
 }
 
 export const AppInfoModal: React.FC<AppInfoModalProps> = ({
@@ -36,10 +40,12 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({
   expenses,
   quotations,
   challans,
+  onOpenUpdateModal,
 }) => {
   const [activeSection, setActiveSection] = useState<'overview' | 'compliance' | 'diagnostics' | 'shortcuts'>('overview');
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [updateMessage, setUpdateMessage] = useState<string | null>(null);
+  const [availableUpdate, setAvailableUpdate] = useState<AppUpdateInfo | null>(null);
 
   // Compute live statistics
   const totalTurnover = invoices.reduce((sum, inv) => sum + inv.grandTotal, 0);
@@ -60,21 +66,33 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({
     ].reduce((sum, str) => sum + str.length, 0) / 1024
   );
 
-  const handleCheckUpdate = () => {
+  const handleCheckUpdate = async () => {
     setIsCheckingUpdate(true);
     setUpdateMessage(null);
-    setTimeout(() => {
+    try {
+      const result = await updateService.checkForUpdates(true);
+      setUpdateMessage(result.message);
+      if (result.status === 'UPDATE_AVAILABLE' && result.updateInfo) {
+        setAvailableUpdate(result.updateInfo);
+        if (onOpenUpdateModal) {
+          onOpenUpdateModal(result.updateInfo);
+        }
+      } else {
+        setAvailableUpdate(null);
+      }
+    } catch (err: any) {
+      setUpdateMessage(err?.message || 'Failed to check for updates.');
+    } finally {
       setIsCheckingUpdate(false);
-      setUpdateMessage('Pro.Sale is up to date. You are running the latest Version 2.4.0 (Build 2026.09.13).');
-    }, 1200);
+    }
   };
 
   const handleCopyDiagnostics = () => {
     const diagnosticData = {
-      app: 'Pro.Sale Enterprise OS',
-      version: '2.4.0',
-      buildDate: '2026-09-13',
-      environment: 'macOS Client / Web Native',
+      app: 'PROSALE Enterprise OS',
+      version: updateService.CURRENT_VERSION,
+      versionCode: updateService.CURRENT_VERSION_CODE,
+      environment: 'Android Tablet / Capacitor WebView',
       business: {
         firmName: settings.firmName,
         gstin: settings.gstin,
@@ -124,9 +142,9 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({
 
           <div className="flex-1 text-center sm:text-left min-w-0">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <h2 className="text-xl font-bold tracking-tight text-neutral-900">Pro.Sale Enterprise</h2>
+              <h2 className="text-xl font-bold tracking-tight text-neutral-900">PROSALE Enterprise</h2>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-200/60 text-neutral-800 border border-neutral-300 uppercase tracking-wider">
-                v2.4.0 Production
+                v{updateService.CURRENT_VERSION} Production
               </span>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 Lifetime Active
@@ -186,19 +204,19 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200/80">
                 <p className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Application Name</p>
-                <p className="text-sm font-bold text-neutral-900 mt-1">Pro.Sale Enterprise Billing OS</p>
+                <p className="text-sm font-bold text-neutral-900 mt-1">PROSALE Enterprise Billing OS</p>
                 <p className="text-xs text-neutral-500 mt-0.5">Full commercial business distribution</p>
               </div>
 
               <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200/80">
                 <p className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Release Version</p>
-                <p className="text-sm font-bold text-neutral-900 mt-1">v2.4.0 (Build 2026.09.13)</p>
+                <p className="text-sm font-bold text-neutral-900 mt-1">v{updateService.CURRENT_VERSION} (Build {updateService.CURRENT_VERSION_CODE})</p>
                 <p className="text-xs text-neutral-500 mt-0.5">Unified Core Release</p>
               </div>
 
               <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200/80">
                 <p className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Registered Entity</p>
-                <p className="text-sm font-bold text-neutral-900 mt-1 truncate">{settings.firmName || 'Pro.Sale Enterprise'}</p>
+                <p className="text-sm font-bold text-neutral-900 mt-1 truncate">{settings.firmName || 'PROSALE Enterprise'}</p>
                 <p className="text-xs text-neutral-500 mt-0.5">GSTIN: {settings.gstin || 'Unregistered / Composition'}</p>
               </div>
 
@@ -212,21 +230,36 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({
             </div>
 
             {/* Check for updates banner */}
-            <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-between">
+            <div className="p-4 rounded-2xl bg-blue-50/80 border border-blue-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-bold text-blue-950">Software Update Status</p>
                 <p className="text-[11px] text-blue-700 mt-0.5">
-                  {updateMessage || 'Automatic background updater is enabled and healthy.'}
+                  {updateMessage || `Running production release v${updateService.CURRENT_VERSION} (Build ${updateService.CURRENT_VERSION_CODE}). Manual update system active.`}
                 </p>
               </div>
-              <button
-                onClick={handleCheckUpdate}
-                disabled={isCheckingUpdate}
-                className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold cursor-pointer transition-all flex items-center space-x-1.5 flex-shrink-0 shadow-xs"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
-                <span>{isCheckingUpdate ? 'Checking...' : 'Check Updates'}</span>
-              </button>
+              <div className="flex items-center space-x-2 flex-shrink-0">
+                {availableUpdate && (
+                  <button
+                    onClick={() => {
+                      if (onOpenUpdateModal) {
+                        onOpenUpdateModal(availableUpdate);
+                      }
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold cursor-pointer transition-all flex items-center space-x-1.5 shadow-xs"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>View Update</span>
+                  </button>
+                )}
+                <button
+                  onClick={handleCheckUpdate}
+                  disabled={isCheckingUpdate}
+                  className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold cursor-pointer transition-all flex items-center space-x-1.5 shadow-xs"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+                  <span>{isCheckingUpdate ? 'Checking...' : 'Check Updates'}</span>
+                </button>
+              </div>
             </div>
           </div>
         )}

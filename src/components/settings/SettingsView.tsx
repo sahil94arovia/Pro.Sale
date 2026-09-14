@@ -34,6 +34,8 @@ import {
   INVOICE_THEMES,
 } from '../../utils/constants';
 import { verifyAndFetchGSTDetails, GSTVerificationResult } from '../../services/gstLookupService';
+import { updateService } from '../../services/updateService';
+import { AppUpdateInfo } from '../../types/update';
 
 interface SettingsViewProps {
   settings: BusinessSettings;
@@ -44,6 +46,7 @@ interface SettingsViewProps {
   onImportBackup: (jsonStr: string) => boolean;
   onClearAllData?: () => void;
   onOpenAppInfo?: () => void;
+  onOpenUpdateModal?: (info: AppUpdateInfo) => void;
   onClose?: () => void;
 }
 
@@ -58,6 +61,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onImportBackup,
   onClearAllData,
   onOpenAppInfo,
+  onOpenUpdateModal,
   onClose,
 }) => {
   // Normalize incoming subtab from left sidebar
@@ -73,6 +77,40 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [currentSection, setCurrentSection] = useState<SettingsSection>(() =>
     getNormalizedSection(activeSubTab)
   );
+
+  // App Updates state
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateStatusMessage, setUpdateStatusMessage] = useState<string | null>(null);
+  const [availableUpdate, setAvailableUpdate] = useState<AppUpdateInfo | null>(null);
+
+  const handleCheckForUpdates = async () => {
+    setIsCheckingUpdate(true);
+    setUpdateStatusMessage(null);
+    try {
+      const res = await updateService.checkForUpdates(true);
+      if (res.status === 'UPDATE_AVAILABLE' && res.updateInfo) {
+        setAvailableUpdate(res.updateInfo);
+        setUpdateStatusMessage(`A newer version (v${res.updateInfo.latestVersion}) is available!`);
+        if (onOpenUpdateModal) {
+          onOpenUpdateModal(res.updateInfo);
+        }
+      } else if (res.status === 'UP_TO_DATE') {
+        setAvailableUpdate(null);
+        setUpdateStatusMessage(`You're up to date. PROSALE v${updateService.CURRENT_VERSION} is the latest version.`);
+      } else if (res.status === 'NO_RELEASE') {
+        setAvailableUpdate(null);
+        setUpdateStatusMessage('No new published releases found on GitHub.');
+      } else {
+        setAvailableUpdate(null);
+        setUpdateStatusMessage(res.message || 'Unable to check for updates right now.');
+      }
+    } catch {
+      setAvailableUpdate(null);
+      setUpdateStatusMessage('Unable to connect. PROSALE is running in offline mode.');
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
 
   // Keep section in sync when user clicks left sidebar accordion item
   useEffect(() => {
@@ -1557,6 +1595,57 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   {importStatus}
                 </div>
               )}
+            </div>
+
+            {/* Application Updates Card */}
+            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+                <div className="flex items-center space-x-2">
+                  <Sparkles className="w-5 h-5 text-neutral-900" />
+                  <div>
+                    <h2 className="text-sm font-bold text-neutral-900">Application Updates</h2>
+                    <p className="text-[11px] text-neutral-500">
+                      Check for official PROSALE production updates distributed via GitHub Releases
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[10px] font-bold font-mono bg-neutral-100 text-neutral-800 border border-neutral-200">
+                  v{updateService.CURRENT_VERSION}
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-neutral-50 border border-neutral-200">
+                <div>
+                  <p className="text-xs font-bold text-neutral-900">
+                    Installed Version: <span className="font-mono text-neutral-700">v{updateService.CURRENT_VERSION} (Build {updateService.CURRENT_VERSION_CODE})</span>
+                  </p>
+                  <p className="text-[11px] text-neutral-500 mt-0.5">
+                    {updateStatusMessage || 'Updates are manual and will never alter your local business records.'}
+                  </p>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  {availableUpdate && (
+                    <button
+                      type="button"
+                      onClick={() => onOpenUpdateModal && onOpenUpdateModal(availableUpdate)}
+                      className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-2xs transition-all active:scale-95 cursor-pointer flex items-center space-x-1.5"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>View Update</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleCheckForUpdates}
+                    disabled={isCheckingUpdate}
+                    className="px-4 py-2 bg-neutral-900 hover:bg-black text-white rounded-xl font-bold text-xs shadow-2xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer flex items-center space-x-2"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isCheckingUpdate ? 'animate-spin' : ''}`} />
+                    <span>{isCheckingUpdate ? 'Checking...' : 'Check for Updates'}</span>
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Danger Zone: Reset / Clear All Demo Data */}
