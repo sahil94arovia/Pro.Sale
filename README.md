@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-v1.0.0-0071e3?style=for-the-badge" alt="Version 1.0.0" />
+  <img src="https://img.shields.io/badge/Version-v1.0.1-0071e3?style=for-the-badge" alt="Version 1.0.1" />
   <img src="https://img.shields.io/badge/License-Enterprise%20Lifetime-10b981?style=for-the-badge" alt="Lifetime License" />
   <img src="https://img.shields.io/badge/GST%20Compliance-CBIC%202026%20Ready-f59e0b?style=for-the-badge" alt="GST 2026 Ready" />
   <img src="https://img.shields.io/badge/Privacy-100%25%20Offline%20Air--Gapped-000000?style=for-the-badge" alt="Offline Privacy" />

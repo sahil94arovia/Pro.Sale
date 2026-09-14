@@ -1,7 +1,7 @@
 import { GitHubRelease, GitHubReleaseAsset, AppUpdateInfo, UpdateCheckResult } from '../types/update';
 
-export const CURRENT_VERSION = '1.0.0';
-export const CURRENT_VERSION_CODE = 1;
+export const CURRENT_VERSION = '1.0.1';
+export const CURRENT_VERSION_CODE = 2;
 export const GITHUB_REPO_OWNER = 'sahil94arovia';
 export const GITHUB_REPO_NAME = 'Pro.Sale';
 export const GITHUB_REPO_URL = `https://github.com/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}`;

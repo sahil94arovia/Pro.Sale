@@ -211,7 +211,10 @@ export const AppInfoModal: React.FC<AppInfoModalProps> = ({
               <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200/80">
                 <p className="text-[11px] font-medium text-neutral-500 uppercase tracking-wider">Release Version</p>
                 <p className="text-sm font-bold text-neutral-900 mt-1">v{updateService.CURRENT_VERSION} (Build {updateService.CURRENT_VERSION_CODE})</p>
-                <p className="text-xs text-neutral-500 mt-0.5">Unified Core Release</p>
+                <p className="text-xs text-emerald-700 font-medium mt-0.5 flex items-center space-x-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                  <span>Production Build • Update System Ready</span>
+                </p>
               </div>
 
               <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200/80">
