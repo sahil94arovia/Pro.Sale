@@ -7,6 +7,7 @@ import {
   DeliveryChallan,
   Expense,
   BusinessSettings,
+  UserProfile,
 } from "../types";
 import { DEFAULT_BUSINESS_SETTINGS } from "../utils/constants";
 
@@ -20,6 +21,8 @@ const DB_KEYS = {
   CHALLANS: "prosale_challans_v2",
   EXPENSES: "prosale_expenses_v2",
   SETTINGS: "prosale_settings_v2",
+  USER_PROFILE: "prosale_user_profile_v2",
+  ONBOARDING_COMPLETED: "prosale_onboarding_completed_v2",
 };
 
 // Automatic cleanup of legacy demo data from v1 storage keys
@@ -36,10 +39,19 @@ const PURGE_KEYS = [
 try {
   if (typeof window !== "undefined" && window.localStorage) {
     PURGE_KEYS.forEach((k) => localStorage.removeItem(k));
-    // Migrate existing custom settings if present
-    const oldSettings = localStorage.getItem("prosale_settings_v1");
-    if (oldSettings && !localStorage.getItem(DB_KEYS.SETTINGS)) {
-      localStorage.setItem(DB_KEYS.SETTINGS, oldSettings);
+
+    // One-time fresh reset requested by user to wipe all demo data and start with blank onboarding
+    const resetKey = "prosale_zero_state_v25";
+    if (!localStorage.getItem(resetKey)) {
+      Object.values(DB_KEYS).forEach((k) => localStorage.removeItem(k));
+      localStorage.removeItem("prosale_license_v2");
+      localStorage.setItem(resetKey, "true");
+    }
+
+    // Purge any settings that still contain legacy demo business details
+    const currentSettings = localStorage.getItem(DB_KEYS.SETTINGS);
+    if (currentSettings && currentSettings.includes("SHRI SHYAMJI")) {
+      localStorage.removeItem(DB_KEYS.SETTINGS);
     }
   }
 } catch {
@@ -485,5 +497,38 @@ export const dbService = {
       console.error("Failed to import database:", err);
       return false;
     }
+  },
+
+  // User Profile
+  getUserProfile(): UserProfile | null {
+    const raw = localStorage.getItem(DB_KEYS.USER_PROFILE);
+    return raw ? JSON.parse(raw) : null;
+  },
+
+  saveUserProfile(profile: UserProfile): UserProfile {
+    localStorage.setItem(DB_KEYS.USER_PROFILE, JSON.stringify(profile));
+    notifyDataChanged();
+    return profile;
+  },
+
+  isOnboardingCompleted(): boolean {
+    return localStorage.getItem(DB_KEYS.ONBOARDING_COMPLETED) === 'true';
+  },
+
+  setOnboardingCompleted(completed: boolean): void {
+    if (completed) {
+      localStorage.setItem(DB_KEYS.ONBOARDING_COMPLETED, 'true');
+    } else {
+      localStorage.removeItem(DB_KEYS.ONBOARDING_COMPLETED);
+    }
+    notifyDataChanged();
+  },
+
+  // Reset entire application data & onboarding
+  resetAllDataAndOnboarding(): void {
+    const allKeys = Object.values(DB_KEYS);
+    allKeys.forEach((k) => localStorage.removeItem(k));
+    localStorage.removeItem('prosale_license_v2');
+    notifyDataChanged();
   },
 };

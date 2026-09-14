@@ -275,7 +275,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         } else {
           setImportStatus('Failed to restore backup. Invalid JSON schema.');
         }
-      } catch (err) {
+      } catch {
         setImportStatus('Error reading file. Please select a valid JSON backup file.');
       }
     };
@@ -292,12 +292,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   ];
 
   return (
-    <div className="flex flex-col h-full bg-[#f8fafc] text-neutral-900 w-full min-h-screen">
-      {/* Sleek Top Header Bar (No Customer Support bloatware, Clean Save Action) */}
-      <header className="bg-white border-b border-neutral-200/80 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-20 shadow-xs">
+    <div className="flex flex-col h-full bg-[#f5f5f7] text-neutral-900 w-full min-h-screen">
+      {/* Sleek Top Header Bar */}
+      <header className="bg-white/95 backdrop-blur-xl border-b border-neutral-200/80 px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-20 shadow-xs">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-neutral-900 text-white flex items-center justify-center font-bold shadow-2xs">
-            <Building2 className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-xl bg-neutral-100 border border-neutral-200 text-neutral-900 flex items-center justify-center font-bold shadow-xs">
+            <Building2 className="w-5 h-5 text-neutral-900" />
           </div>
           <div>
             <h1 className="text-base font-bold text-neutral-900 tracking-tight leading-tight">
@@ -309,8 +309,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
         </div>
 
-        {/* Clean Horizontal Sub-Menu Switcher (No secondary vertical sidebar!) */}
-        <div className="flex items-center bg-neutral-100/90 p-1 rounded-2xl border border-neutral-200/60 overflow-x-auto max-w-full">
+        {/* Clean Horizontal Sub-Menu Switcher */}
+        <div className="flex items-center bg-neutral-100 p-1 rounded-2xl border border-neutral-200/60 overflow-x-auto max-w-full">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isSelected = currentSection === item.id;
@@ -321,11 +321,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 onClick={() => handleSwitchSection(item.id)}
                 className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   isSelected
-                    ? 'bg-white text-black shadow-xs font-bold'
-                    : 'text-neutral-600 hover:text-black hover:bg-white/60'
+                    ? 'bg-white text-neutral-900 shadow-xs font-bold'
+                    : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60'
                 }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-black' : 'text-neutral-500'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-neutral-900' : 'text-neutral-500'}`} />
                 <span>{item.label}</span>
               </button>
             );
@@ -335,7 +335,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* Save Action & Close */}
         <div className="flex items-center space-x-3">
           {saveSuccess && (
-            <div className="flex items-center space-x-1.5 text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200 text-xs font-semibold animate-fade-in shadow-2xs">
+            <div className="flex items-center space-x-1.5 text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200 text-xs font-semibold animate-fade-in shadow-xs">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               <span>Saved Successfully</span>
             </div>
@@ -344,7 +344,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <button
               type="button"
               onClick={onOpenAppInfo}
-              className="flex items-center space-x-1.5 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-xl text-xs font-semibold shadow-2xs transition-all active:scale-95 cursor-pointer"
+              className="flex items-center space-x-1.5 px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200 rounded-xl text-xs font-semibold shadow-xs transition-all active:scale-95 cursor-pointer"
               title="View Pro.Sale Version, Compliance, and Diagnostics"
             >
               <Info className="w-3.5 h-3.5 text-neutral-600" />
@@ -352,9 +352,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </button>
           )}
           <button
-            type="button"
+            type="submit"
             onClick={handleSubmit}
-            className="flex items-center space-x-1.5 px-5 py-2 bg-neutral-900 hover:bg-black text-white rounded-xl text-xs font-bold shadow-2xs transition-all active:scale-95 cursor-pointer"
+            className="flex items-center space-x-1.5 px-5 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
           >
             <Save className="w-3.5 h-3.5" />
             <span>Save Settings</span>
@@ -363,7 +363,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl hover:bg-neutral-100 text-neutral-400 hover:text-black transition-colors cursor-pointer"
+              className="p-2 rounded-xl hover:bg-neutral-100 text-neutral-500 hover:text-neutral-900 transition-colors cursor-pointer"
               title="Close Settings"
             >
               <X className="w-5 h-5" />
@@ -380,7 +380,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {currentSection === 'profile' && (
           <div className="space-y-6 text-xs animate-fade-in">
             {/* Business Identity */}
-            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-4">
+            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
               <div className="flex items-center space-x-2 pb-2 border-b border-neutral-100">
                 <Building2 className="w-5 h-5 text-neutral-900" />
                 <div>
@@ -531,7 +531,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Bank & UPI Details */}
-            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-4">
+            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
               <div className="flex items-center space-x-2 pb-2 border-b border-neutral-100">
                 <CreditCard className="w-5 h-5 text-neutral-900" />
                 <div>
@@ -606,7 +606,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Invoicing Preferences & Terms */}
-            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-4">
+            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
               <div className="flex items-center space-x-2 pb-2 border-b border-neutral-100">
                 <FileText className="w-5 h-5 text-neutral-900" />
                 <div>
@@ -667,7 +667,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {currentSection === 'print' && (
           <div className="space-y-6 text-xs animate-fade-in">
             {/* Top Themes Gallery (All 15 Themes) */}
-            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-4">
+            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-neutral-100">
                 <div className="flex items-center space-x-2">
                   <LayoutTemplate className="w-5 h-5 text-neutral-900" />
@@ -736,7 +736,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Header Toggles & Logo Upload */}
-            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-4">
+            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
               <div className="flex flex-wrap items-center justify-between pb-3 border-b border-neutral-100 gap-3">
                 <div className="flex items-center space-x-2">
                   <Building2 className="w-5 h-5 text-neutral-900" />
@@ -836,7 +836,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Paper, Sizing & Orientation */}
-            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-4">
+            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
               <h2 className="text-sm font-bold text-neutral-900 pb-2 border-b border-neutral-100">
                 Paper, Sizing & Orientation
               </h2>
@@ -919,7 +919,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Copies Setup */}
-            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-4">
+            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
                 <h2 className="text-sm font-bold text-neutral-900">Print Original/Duplicate Copies</h2>
                 <label className="flex items-center space-x-2 cursor-pointer">
@@ -986,7 +986,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {/* Item Table & Totals/Taxes */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Item Table Box */}
-              <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-3.5">
+              <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-3.5">
                 <h2 className="text-sm font-bold text-neutral-900 pb-2 border-b border-neutral-100">
                   Item Table Customization
                 </h2>
@@ -1068,7 +1068,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* Totals & Taxes Box */}
-              <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-3">
+              <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-3">
                 <h2 className="text-sm font-bold text-neutral-900 pb-2 border-b border-neutral-100">
                   Totals & Taxes
                 </h2>
@@ -1178,7 +1178,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Footer & Signatures */}
-            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-4">
+            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
               <h2 className="text-sm font-bold text-neutral-900 pb-2 border-b border-neutral-100">
                 Footer & Signatures
               </h2>
@@ -1330,7 +1330,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ========================================================================= */}
         {currentSection === 'taxes' && (
           <div className="max-w-4xl space-y-6 text-xs animate-fade-in">
-            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-4">
+            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
               <div className="flex items-center space-x-2 pb-2 border-b border-neutral-100">
                 <Percent className="w-5 h-5 text-neutral-900" />
                 <div>
@@ -1426,7 +1426,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ========================================================================= */}
         {currentSection === 'messages' && (
           <div className="max-w-4xl space-y-6 text-xs animate-fade-in">
-            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-4">
+            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
                 <div className="flex items-center space-x-2">
                   <MessageSquare className="w-5 h-5 text-neutral-900" />
@@ -1498,7 +1498,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {currentSection === 'backup' && (
           <div className="max-w-4xl space-y-6 text-xs animate-fade-in">
             {/* Export & Restore */}
-            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-4">
+            <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
               <div className="flex items-center space-x-2 pb-2 border-b border-neutral-100">
                 <RefreshCw className="w-5 h-5 text-neutral-900" />
                 <div>

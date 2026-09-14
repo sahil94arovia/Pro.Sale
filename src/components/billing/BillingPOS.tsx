@@ -40,7 +40,7 @@ import {
   SplitPaymentEntry,
 } from '../../types';
 import { calculateInvoiceTotals, ExtraChargeOptions } from '../../services/gstCalculator';
-import { formatINR, formatDate } from '../../utils/formatters';
+import { formatINR, formatDate, getLocalDateISO } from '../../utils/formatters';
 import { GST_RATES, COMMON_UNITS, INDIAN_STATES } from '../../utils/constants';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { PaymentModal } from './PaymentModal';
@@ -108,7 +108,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
   const [invoiceNumberSuffix, setInvoiceNumberSuffix] = useState<string>(() =>
     String(settings.nextInvoiceNumber || 25554)
   );
-  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const todayStr = useMemo(() => getLocalDateISO(), []);
   const [invoiceDate, setInvoiceDate] = useState(todayStr);
   const [paymentTerms, setPaymentTerms] = useState('Due on Receipt');
   const [dueDate, setDueDate] = useState(todayStr);
@@ -128,7 +128,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
       else if (paymentTerms === 'Immediate' || paymentTerms === 'Due on Receipt') addDays = 0;
 
       const due = new Date(base.getTime() + addDays * 86400000);
-      setDueDate(due.toISOString().slice(0, 10));
+      setDueDate(getLocalDateISO(due));
     } catch {
       // fallback
     }
@@ -151,7 +151,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
     return selectedStateObj.code !== settings.stateCode;
   }, [selectedStateObj, settings.stateCode]);
 
-  // Items Table (starts with 3 clean blank rows ready for typing)
+  // Items Table (starts with 2 clean blank rows ready for typing)
   const createEmptyRow = (idSuffix: string = ''): BillingRow => ({
     id: 'row-' + Date.now() + Math.random().toString(36).slice(2, 7) + idSuffix,
     name: '',
@@ -168,7 +168,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
     taxRate: 12,
   });
 
-  const [rows, setRows] = useState<BillingRow[]>([
+  const [rows, setRows] = useState<BillingRow[]>(() => [
     createEmptyRow('-1'),
     createEmptyRow('-2'),
   ]);
@@ -348,8 +348,32 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
         }));
         setRows(mappedRows);
       }
+    } else {
+      setActiveTabName('Sale Invoice (Tab 1)');
+      setSaleType('CREDIT');
+      setSelectedCustomer(null);
+      setPartySearchQuery('');
+      setInvoicePrefix(settings.invoicePrefix || 'TaxInvoice');
+      setInvoiceNumberSuffix(String(settings.nextInvoiceNumber || 25554));
+      setInvoiceDate(getLocalDateISO());
+      setDueDate(getLocalDateISO());
+      setPaymentTerms('Due on Receipt');
+      setStateOfSupply(settings.state || 'Madhya Pradesh');
+      setTransportName('');
+      setDeliveryLocation('');
+      setVehicleNumber('');
+      setDeliveryDate('');
+      setTermsText(settings.termsAndConditions || '');
+      setInvoiceDescription('');
+      setShowDescriptionField(false);
+      setNumberOfCopies('Original (For Recipient)');
+      setBillDiscountAmount(0);
+      setBillDiscountPercent(0);
+      setShippingAmount(0);
+      setPackagingAmount(0);
+      setRows([createEmptyRow('-1'), createEmptyRow('-2')]);
     }
-  }, [initialInvoice]);
+  }, [initialInvoice, settings]);
 
   // Filtered customers for search
   const filteredCustomers = useMemo(() => {
@@ -759,33 +783,33 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] text-neutral-900 font-sans text-xs pb-20 flex flex-col selection:bg-neutral-200">
+    <div className="min-h-screen bg-[#f5f5f7] text-neutral-900 font-sans text-xs pb-24 flex flex-col selection:bg-neutral-200">
       {/* ========================================================================= */}
       {/* 1. APPLE TOP BAR (SHARP EDGES, MINIMALIST & PROFESSIONAL)                  */}
       {/* ========================================================================= */}
-      <div className="bg-white border-b border-neutral-200 px-5 py-2 flex items-center justify-between">
+      <div className="bg-white/90 backdrop-blur-xl border-b border-neutral-200/80 px-4 sm:px-5 py-2 flex items-center justify-between sticky top-0 z-20 shadow-xs">
         {/* Tab Strip */}
         <div className="flex items-center space-x-1.5">
           {onCancelEdit && (
             <button
               type="button"
               onClick={onCancelEdit}
-              className="mr-1 px-2.5 py-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-[5px] border border-neutral-300 text-xs font-medium flex items-center space-x-1 transition-colors cursor-pointer"
+              className="mr-1 px-2.5 py-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded-md border border-neutral-200 text-xs font-medium flex items-center space-x-1 transition-colors cursor-pointer"
             >
               <span>← All Sale Bills</span>
             </button>
           )}
           <div
-            className={`flex items-center px-2.5 py-1 rounded-[5px] border text-xs font-medium ${
+            className={`flex items-center px-2.5 py-1 rounded-md border text-xs font-medium ${
               initialInvoice
-                ? 'bg-amber-50 border-amber-300 text-amber-900 font-semibold'
+                ? 'bg-amber-50 border-amber-200 text-amber-700 font-semibold'
                 : 'bg-neutral-100 border-neutral-200 text-neutral-900'
             }`}
           >
             <span>{initialInvoice ? `Editing: ${initialInvoice.invoiceNumber}` : activeTabName}</span>
             <button
               onClick={initialInvoice && onCancelEdit ? onCancelEdit : handleResetDraft}
-              className="ml-2 text-neutral-400 hover:text-black transition-colors cursor-pointer"
+              className="ml-2 text-neutral-400 hover:text-neutral-700 transition-colors cursor-pointer"
               title={initialInvoice ? 'Cancel Edit' : 'Close / Reset'}
             >
               <X className="w-3 h-3" />
@@ -798,7 +822,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                   handleResetDraft();
                 }
               }}
-              className="w-6 h-6 rounded-[5px] border border-neutral-200 bg-white text-neutral-600 hover:text-black hover:bg-neutral-50 flex items-center justify-center transition-all cursor-pointer"
+              className="w-6 h-6 rounded-md border border-neutral-200 bg-neutral-100 text-neutral-700 hover:text-neutral-900 hover:bg-neutral-200 flex items-center justify-center transition-all cursor-pointer"
               title="New Draft"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -813,7 +837,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
             <select
               value={selectedGodown}
               onChange={(e) => setSelectedGodown(e.target.value)}
-              className="h-7 pl-2.5 pr-6 bg-neutral-50 rounded-[5px] border border-neutral-200 text-xs font-medium text-neutral-700 appearance-none cursor-pointer focus:outline-none focus:border-neutral-900"
+              className="h-7 pl-2.5 pr-6 bg-neutral-100 rounded-md border border-neutral-200 text-xs font-medium text-neutral-800 appearance-none cursor-pointer focus:outline-none focus:border-black"
             >
               <option value="Main Godown">Godown: Main Godown</option>
               <option value="Retail Counter">Godown: Retail Counter</option>
@@ -822,13 +846,13 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
             <ChevronDown className="w-3 h-3 text-neutral-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
-          {/* Company Badge */}
-          <div className="flex items-center space-x-1.5 h-7 px-2.5 bg-neutral-50 rounded-[5px] border border-neutral-200">
-            <div className="w-4 h-4 rounded-[3px] bg-black text-white flex items-center justify-center font-bold text-[9px]">
-              {(settings.firmName || 'S').slice(0, 1).toUpperCase()}
+          {/* Company Badge (Desktop / Tablet) */}
+          <div className="hidden md:flex items-center space-x-1.5 h-7 px-2.5 bg-neutral-100 rounded-md border border-neutral-200">
+            <div className="w-4 h-4 rounded-xs bg-black text-white flex items-center justify-center font-bold text-[9px]">
+              {(settings.firmName || 'P').slice(0, 1).toUpperCase()}
             </div>
             <span className="font-medium text-neutral-800 text-xs truncate max-w-[210px]">
-              {settings.firmName || 'SHRI SHYAMJI MOUTH FRESHNER'}
+              {settings.firmName || 'Pro.Sale Store'}
             </span>
           </div>
 
@@ -836,8 +860,8 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
           <div className="relative">
             <button
               onClick={() => setIsCalculatorOpen(!isCalculatorOpen)}
-              className={`w-7 h-7 rounded-[5px] border border-neutral-200 flex items-center justify-center transition-all cursor-pointer ${
-                isCalculatorOpen ? 'bg-black text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50'
+              className={`w-7 h-7 rounded-md border border-neutral-200 flex items-center justify-center transition-all cursor-pointer ${
+                isCalculatorOpen ? 'bg-black text-white font-bold' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
               }`}
               title="Quick Calculator"
             >
@@ -846,29 +870,29 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
 
             {/* Floating Mini Calculator */}
             {isCalculatorOpen && (
-              <div className="absolute right-0 top-9 w-52 bg-white rounded-md border border-neutral-300 shadow-lg p-2.5 z-50 animate-in fade-in zoom-in-95">
-                <div className="flex items-center justify-between pb-1.5 border-b border-neutral-200 mb-2">
+              <div className="absolute right-0 top-9 w-52 bg-white rounded-xl border border-neutral-200 shadow-2xl p-2.5 z-50 animate-in fade-in zoom-in-95">
+                <div className="flex items-center justify-between pb-1.5 border-b border-neutral-100 mb-2">
                   <span className="font-semibold text-[10px] uppercase tracking-wider text-neutral-500">Calculator</span>
-                  <button onClick={() => setIsCalculatorOpen(false)} className="text-neutral-400 hover:text-black">
+                  <button onClick={() => setIsCalculatorOpen(false)} className="text-neutral-400 hover:text-neutral-700">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <div className="bg-neutral-50 p-2 rounded-[4px] text-right font-sans tabular-nums text-sm font-bold min-h-[34px] mb-2 border border-neutral-200 break-all text-neutral-900">
+                <div className="bg-neutral-50 p-2 rounded-lg text-right font-sans tabular-nums text-sm font-bold min-h-[34px] mb-2 border border-neutral-200 break-all text-neutral-900">
                   {calcResult !== null ? calcResult : calcInput || '0'}
                 </div>
                 <div className="grid grid-cols-4 gap-1 font-sans tabular-nums text-xs">
                   {['7', '8', '9', '/'].map((b) => (
-                    <button key={b} onClick={() => handleCalcButton(b)} className="p-1.5 rounded-[4px] bg-neutral-100 hover:bg-neutral-200 font-semibold text-neutral-800">
+                    <button key={b} onClick={() => handleCalcButton(b)} className="p-1.5 rounded-md bg-neutral-100 hover:bg-neutral-200 font-semibold text-neutral-800">
                       {b}
                     </button>
                   ))}
                   {['4', '5', '6', '*'].map((b) => (
-                    <button key={b} onClick={() => handleCalcButton(b)} className="p-1.5 rounded-[4px] bg-neutral-100 hover:bg-neutral-200 font-semibold text-neutral-800">
+                    <button key={b} onClick={() => handleCalcButton(b)} className="p-1.5 rounded-md bg-neutral-100 hover:bg-neutral-200 font-semibold text-neutral-800">
                       {b}
                     </button>
                   ))}
                   {['1', '2', '3', '-'].map((b) => (
-                    <button key={b} onClick={() => handleCalcButton(b)} className="p-1.5 rounded-[4px] bg-neutral-100 hover:bg-neutral-200 font-semibold text-neutral-800">
+                    <button key={b} onClick={() => handleCalcButton(b)} className="p-1.5 rounded-md bg-neutral-100 hover:bg-neutral-200 font-semibold text-neutral-800">
                       {b}
                     </button>
                   ))}
@@ -876,8 +900,8 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                     <button
                       key={b}
                       onClick={() => handleCalcButton(b)}
-                      className={`p-1.5 rounded-[4px] font-semibold ${
-                        b === '=' ? 'bg-[#0071e3] text-white' : b === 'C' ? 'bg-red-50 text-red-600' : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800'
+                      className={`p-1.5 rounded-md font-semibold ${
+                        b === '=' ? 'bg-black text-white' : b === 'C' ? 'bg-rose-50 text-rose-700' : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800'
                       }`}
                     >
                       {b}
@@ -892,7 +916,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
           {onClose && (
             <button
               onClick={onClose}
-              className="w-7 h-7 rounded-[5px] border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-500 hover:text-black flex items-center justify-center transition-all cursor-pointer"
+              className="w-7 h-7 rounded-md border border-neutral-200 bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-900 flex items-center justify-center transition-all cursor-pointer"
               title="Close Window"
             >
               <X className="w-3.5 h-3.5" />
@@ -904,18 +928,18 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
       {/* ========================================================================= */}
       {/* 2. SUB-BAR: SALE TITLE + SEGMENTED CONTROLS (APPLE MINIMALISM)             */}
       {/* ========================================================================= */}
-      <div className="px-5 py-2.5 bg-white border-b border-neutral-200 flex items-center justify-between">
+      <div className="px-4 sm:px-5 py-2.5 bg-white border-b border-neutral-200/80 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <h1 className="text-base font-semibold tracking-tight text-neutral-900">Sale</h1>
 
           {/* macOS Segmented Switch */}
-          <div className="inline-flex p-0.5 bg-neutral-100 rounded-[6px] border border-neutral-200">
+          <div className="inline-flex p-0.5 bg-neutral-100 rounded-lg border border-neutral-200/60">
             <button
               type="button"
               onClick={() => setSaleType('CREDIT')}
-              className={`px-3 py-1 rounded-[5px] text-xs transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md text-xs transition-all cursor-pointer ${
                 saleType === 'CREDIT'
-                  ? 'bg-white text-neutral-900 font-semibold shadow-2xs'
+                  ? 'bg-white text-neutral-900 font-semibold shadow-xs'
                   : 'text-neutral-500 hover:text-neutral-900'
               }`}
             >
@@ -924,9 +948,9 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
             <button
               type="button"
               onClick={() => setSaleType('CASH')}
-              className={`px-3 py-1 rounded-[5px] text-xs transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-md text-xs transition-all cursor-pointer ${
                 saleType === 'CASH'
-                  ? 'bg-white text-neutral-900 font-semibold shadow-2xs'
+                  ? 'bg-white text-neutral-900 font-semibold shadow-xs'
                   : 'text-neutral-500 hover:text-neutral-900'
               }`}
             >
@@ -939,10 +963,10 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
         <div className="flex items-center space-x-2 text-xs">
           <span className="text-neutral-500 text-[11px]">Tax Type:</span>
           <span
-            className={`font-medium px-2 py-0.5 rounded-[4px] text-[11px] border ${
+            className={`font-medium px-2 py-0.5 rounded-md text-[11px] border ${
               isInterState
-                ? 'bg-amber-50 text-amber-800 border-amber-200'
-                : 'bg-neutral-50 text-neutral-700 border-neutral-200'
+                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                : 'bg-neutral-100 text-neutral-700 border-neutral-200'
             }`}
           >
             {isInterState ? 'Inter-State (IGST 100%)' : 'Intra-State (CGST 50% + SGST 50%)'}
@@ -953,8 +977,8 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
       {/* ========================================================================= */}
       {/* 3. MAIN FORM BODY: PARTY & INVOICE DETAILS (SHARP EDGES & CLEAN ALIGNMENT) */}
       {/* ========================================================================= */}
-      <div className="p-4 sm:p-5 space-y-3.5 max-w-[1550px] w-full mx-auto flex-1">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 bg-white p-3.5 rounded-lg border border-neutral-200 shadow-2xs">
+      <div className="p-3 sm:p-5 space-y-3.5 max-w-[1550px] w-full mx-auto flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 bg-white p-3.5 rounded-2xl border border-neutral-200/80 shadow-xs">
           {/* LEFT 5 COLS: PARTY / CUSTOMER SEARCH & DETAILS */}
           <div className="lg:col-span-5 space-y-1.5" ref={partySearchRef}>
             <div className="relative">
@@ -962,7 +986,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                 <div>
                   <div
                     onClick={() => setIsPartyDropdownOpen(true)}
-                    className="relative flex items-center bg-neutral-50/50 border border-neutral-200 rounded-md px-3 h-8 cursor-pointer hover:border-neutral-400 focus-within:border-neutral-900 focus-within:bg-white transition-all"
+                    className="relative flex items-center bg-neutral-50 border border-neutral-200 rounded-xl px-3 h-8 cursor-pointer hover:border-black/30 focus-within:border-black focus-within:bg-white transition-all"
                   >
                     <Search className="w-3.5 h-3.5 text-neutral-400 mr-2 shrink-0" />
                     <input
@@ -981,9 +1005,9 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
 
                   {/* Autocomplete Dropdown */}
                   {isPartyDropdownOpen && (
-                    <div className="absolute left-0 right-0 top-9 bg-white rounded-md border border-neutral-300 shadow-lg z-30 max-h-60 overflow-y-auto p-1 font-sans">
+                    <div className="absolute left-0 right-0 top-9 bg-white rounded-xl border border-neutral-200 shadow-2xl z-30 max-h-60 overflow-y-auto p-1 font-sans">
                       <div className="flex items-center justify-between px-2.5 py-1 border-b border-neutral-100 mb-1">
-                        <span className="text-[10px] uppercase font-semibold text-neutral-400 tracking-wider">
+                        <span className="text-[10px] uppercase font-semibold text-neutral-500 tracking-wider">
                           Select Party
                         </span>
                         <button
@@ -991,14 +1015,14 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                             setIsPartyDropdownOpen(false);
                             setShowAddCustomerModal(true);
                           }}
-                          className="text-[11px] font-medium text-[#0071e3] hover:underline cursor-pointer"
+                          className="text-[11px] font-medium text-blue-600 hover:underline cursor-pointer"
                         >
                           + Add New Party
                         </button>
                       </div>
 
                       {filteredCustomers.length === 0 ? (
-                        <div className="p-3 text-center text-neutral-500">
+                        <div className="p-3 text-center text-neutral-400">
                           <p>No party found matching &quot;{partySearchQuery}&quot;</p>
                           <button
                             onClick={() => {
@@ -1006,7 +1030,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                               setPartyName(partySearchQuery);
                               setShowAddCustomerModal(true);
                             }}
-                            className="mt-1.5 px-3 py-1 rounded-md bg-neutral-900 text-white text-xs font-medium cursor-pointer"
+                            className="mt-1.5 px-3 py-1 rounded-md bg-black text-white text-xs font-semibold hover:bg-neutral-800 cursor-pointer shadow-xs"
                           >
                             Create Party &quot;{partySearchQuery}&quot;
                           </button>
@@ -1020,7 +1044,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                               setIsPartyDropdownOpen(false);
                               setPartySearchQuery('');
                             }}
-                            className="p-2 hover:bg-neutral-50 rounded-[4px] cursor-pointer flex items-center justify-between transition-colors"
+                            className="p-2 hover:bg-neutral-50 rounded-lg cursor-pointer flex items-center justify-between transition-colors"
                           >
                             <div>
                               <p className="font-semibold text-xs text-neutral-900">{c.name}</p>
@@ -1031,7 +1055,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                             <div className="text-right">
                               <span
                                 className={`text-[11px] font-sans tabular-nums font-medium ${
-                                  c.currentBalance > 0 ? 'text-red-600' : 'text-neutral-600'
+                                  c.currentBalance > 0 ? 'text-rose-600' : 'text-neutral-500'
                                 }`}
                               >
                                 Bal: {formatINR(c.currentBalance)}
@@ -1045,12 +1069,12 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                 </div>
               ) : (
                 /* Selected Customer Chip */
-                <div className="p-2.5 bg-neutral-50 rounded-md border border-neutral-200 flex items-start justify-between">
+                <div className="p-2.5 bg-neutral-50 rounded-xl border border-neutral-200/80 flex items-start justify-between">
                   <div className="space-y-0.5">
                     <div className="flex items-center space-x-2">
                       <span className="font-semibold text-xs text-neutral-900">{selectedCustomer.name}</span>
                       {selectedCustomer.companyName && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-[3px] bg-neutral-200 text-neutral-600 font-medium">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-neutral-200 text-neutral-700 font-medium border border-neutral-300">
                           {selectedCustomer.companyName}
                         </span>
                       )}
@@ -1058,13 +1082,13 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                     <p className="text-[10px] text-neutral-500 font-sans tabular-nums">
                       Phone: {selectedCustomer.phone || '—'} | GSTIN: {selectedCustomer.gstin || 'Unregistered'}
                     </p>
-                    <p className="text-[11px] text-neutral-600 truncate max-w-sm">
+                    <p className="text-[11px] text-neutral-500 truncate max-w-sm">
                       {selectedCustomer.billingAddress}, {selectedCustomer.city}, {selectedCustomer.state}
                     </p>
                     <div className="pt-0.5">
                       <span
                         className={`text-[11px] font-sans tabular-nums font-semibold ${
-                          selectedCustomer.currentBalance > 0 ? 'text-red-600' : 'text-emerald-700'
+                          selectedCustomer.currentBalance > 0 ? 'text-rose-600' : 'text-emerald-700'
                         }`}
                       >
                         Balance Due: {formatINR(selectedCustomer.currentBalance)}
@@ -1073,7 +1097,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                   </div>
                   <button
                     onClick={() => setSelectedCustomer(null)}
-                    className="text-xs text-[#0071e3] hover:underline font-medium cursor-pointer"
+                    className="text-xs text-blue-600 hover:underline font-medium cursor-pointer"
                   >
                     Change Party
                   </button>
@@ -1089,15 +1113,15 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
               <label className="text-[10px] uppercase font-semibold text-neutral-500 tracking-wider block">
                 Invoice Number
               </label>
-              <div className="flex items-center h-8 border border-neutral-200 rounded-md overflow-hidden bg-neutral-50/50 focus-within:bg-white focus-within:border-neutral-900 transition-colors">
+              <div className="flex items-center h-8 border border-neutral-200 rounded-xl overflow-hidden bg-neutral-50 focus-within:bg-white focus-within:border-black transition-colors">
                 <select
                   value={invoicePrefix}
                   onChange={(e) => setInvoicePrefix(e.target.value)}
-                  className="h-full px-2 bg-transparent text-[11px] font-medium text-neutral-600 border-r border-neutral-200 focus:outline-none cursor-pointer"
+                  className="h-full px-2 bg-transparent text-[11px] font-medium text-neutral-700 border-r border-neutral-200 focus:outline-none cursor-pointer"
                 >
-                  <option value="TaxInvoice">TaxInvoice</option>
-                  <option value="INV">INV</option>
-                  <option value="BILL">BILL</option>
+                  <option value="TaxInvoice" className="bg-white text-neutral-900">TaxInvoice</option>
+                  <option value="INV" className="bg-white text-neutral-900">INV</option>
+                  <option value="BILL" className="bg-white text-neutral-900">BILL</option>
                 </select>
                 <input
                   type="text"
@@ -1117,7 +1141,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                 type="date"
                 value={invoiceDate}
                 onChange={(e) => setInvoiceDate(e.target.value)}
-                className="w-full h-8 px-2 rounded-md border border-neutral-200 bg-neutral-50/50 text-xs font-medium text-neutral-800 focus:bg-white focus:outline-none focus:border-neutral-900 transition-colors"
+                className="w-full h-8 px-2 rounded-xl border border-neutral-200 bg-neutral-50 text-xs font-medium text-neutral-900 focus:outline-none focus:bg-white focus:border-black transition-colors"
               />
             </div>
 
@@ -1129,14 +1153,14 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
               <select
                 value={paymentTerms}
                 onChange={(e) => setPaymentTerms(e.target.value)}
-                className="w-full h-8 px-2 rounded-md border border-neutral-200 bg-neutral-50/50 text-xs font-medium text-neutral-800 focus:bg-white focus:outline-none focus:border-neutral-900 cursor-pointer transition-colors"
+                className="w-full h-8 px-2 rounded-xl border border-neutral-200 bg-neutral-50 text-xs font-medium text-neutral-900 focus:outline-none focus:bg-white focus:border-black cursor-pointer transition-colors"
               >
-                <option value="Due on Receipt">Due on Receipt</option>
-                <option value="Immediate">Immediate / Cash</option>
-                <option value="Net 7">Net 7 Days</option>
-                <option value="Net 15">Net 15 Days</option>
-                <option value="Net 30">Net 30 Days</option>
-                <option value="Net 60">Net 60 Days</option>
+                <option value="Due on Receipt" className="bg-white text-neutral-900">Due on Receipt</option>
+                <option value="Immediate" className="bg-white text-neutral-900">Immediate / Cash</option>
+                <option value="Net 7" className="bg-white text-neutral-900">Net 7 Days</option>
+                <option value="Net 15" className="bg-white text-neutral-900">Net 15 Days</option>
+                <option value="Net 30" className="bg-white text-neutral-900">Net 30 Days</option>
+                <option value="Net 60" className="bg-white text-neutral-900">Net 60 Days</option>
               </select>
             </div>
 
@@ -1149,7 +1173,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full h-8 px-2 rounded-md border border-neutral-200 bg-neutral-50/50 text-xs font-medium text-neutral-800 focus:bg-white focus:outline-none focus:border-neutral-900 transition-colors"
+                className="w-full h-8 px-2 rounded-xl border border-neutral-200 bg-neutral-50 text-xs font-medium text-neutral-900 focus:outline-none focus:bg-white focus:border-black transition-colors"
               />
             </div>
 
@@ -1161,10 +1185,10 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
               <select
                 value={stateOfSupply}
                 onChange={(e) => setStateOfSupply(e.target.value)}
-                className="w-full h-8 px-2 rounded-md border border-neutral-200 bg-neutral-50/50 text-xs font-medium text-neutral-800 focus:bg-white focus:outline-none focus:border-neutral-900 cursor-pointer transition-colors"
+                className="w-full h-8 px-2 rounded-xl border border-neutral-200 bg-neutral-50 text-xs font-medium text-neutral-900 focus:outline-none focus:bg-white focus:border-black cursor-pointer transition-colors"
               >
                 {INDIAN_STATES.map((st) => (
-                  <option key={st.code} value={st.name}>
+                  <option key={st.code} value={st.name} className="bg-white text-neutral-900">
                     {st.code} - {st.name}
                   </option>
                 ))}
@@ -1176,35 +1200,35 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
         {/* ========================================================================= */}
         {/* 4. THE BILLING ITEM GRID TABLE (CRISP APPLE EXCEL SPREADSHEET STYLE)      */}
         {/* ========================================================================= */}
-        <div className="bg-white rounded-lg border border-neutral-200 shadow-2xs">
+        <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
           <div className="overflow-x-auto min-h-[160px]">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[#f8f9fa] text-neutral-600 font-semibold border-b border-neutral-200 text-[10px] tracking-wider uppercase">
+                <tr className="bg-neutral-50/80 text-neutral-600 font-semibold border-b border-neutral-200/80 text-[10px] tracking-wider uppercase">
                   {/* Barcode scanner icon */}
-                  <th className="py-2 px-2 text-center border-r border-neutral-200 w-10">
+                  <th className="py-2 px-2 text-center border-r border-neutral-200/60 w-10">
                     <button
                       type="button"
                       onClick={() => setIsScannerOpen(true)}
-                      className="p-1 rounded hover:bg-neutral-200 text-neutral-700 transition-colors cursor-pointer"
+                      className="p-1 rounded hover:bg-neutral-200 text-neutral-500 hover:text-neutral-900 transition-colors cursor-pointer"
                       title="Scan Barcode Gun"
                     >
                       <Scan className="w-3.5 h-3.5 mx-auto" />
                     </button>
                   </th>
-                  <th className="py-2 px-3 border-r border-neutral-200 min-w-[280px]">ITEM</th>
-                  <th className="py-2 px-2 text-right border-r border-neutral-200 w-20">MRP</th>
-                  <th className="py-2 px-2 border-r border-neutral-200 w-24">SIZE</th>
-                  <th className="py-2 px-2 text-center border-r border-neutral-200 w-16">QTY</th>
-                  <th className="py-2 px-2 text-center border-r border-neutral-200 w-20">UNIT</th>
-                  <th className="py-2 px-2 text-right border-r border-neutral-200 w-32">PRICE/UNIT</th>
-                  <th className="py-2 px-2 text-right border-r border-neutral-200 w-28">DISCOUNT % | ₹</th>
-                  <th className="py-2 px-2 text-right border-r border-neutral-200 w-28">TAX % | ₹</th>
-                  <th className="py-2 px-3 text-right border-r border-neutral-200 w-28">AMOUNT</th>
+                  <th className="py-2 px-3 border-r border-neutral-200/60 min-w-[280px]">ITEM</th>
+                  <th className="py-2 px-2 text-right border-r border-neutral-200/60 w-20">MRP</th>
+                  <th className="py-2 px-2 border-r border-neutral-200/60 w-24">SIZE</th>
+                  <th className="py-2 px-2 text-center border-r border-neutral-200/60 w-16">QTY</th>
+                  <th className="py-2 px-2 text-center border-r border-neutral-200/60 w-20">UNIT</th>
+                  <th className="py-2 px-2 text-right border-r border-neutral-200/60 w-32">PRICE/UNIT</th>
+                  <th className="py-2 px-2 text-right border-r border-neutral-200/60 w-28">DISCOUNT % | ₹</th>
+                  <th className="py-2 px-2 text-right border-r border-neutral-200/60 w-28">TAX % | ₹</th>
+                  <th className="py-2 px-3 text-right border-r border-neutral-200/60 w-28">AMOUNT</th>
                   <th className="py-2 px-2 text-center w-8"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-150 font-sans tabular-nums text-xs">
+              <tbody className="divide-y divide-neutral-100 font-sans tabular-nums text-xs">
                 {rows.map((row, idx) => {
                   const baseRate =
                     row.priceWithTax && row.taxRate > 0
@@ -1220,14 +1244,14 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                   const rowTotal = taxable + taxAmt;
 
                   return (
-                    <tr key={row.id} className="hover:bg-neutral-50/80 transition-colors relative">
+                    <tr key={row.id} className="hover:bg-neutral-50/60 transition-colors relative">
                       {/* # Icon */}
-                      <td className="py-1.5 px-2 text-center border-r border-neutral-200 font-sans text-neutral-400">
-                        {idx === 0 ? <Zap className="w-3.5 h-3.5 text-blue-500 mx-auto" /> : idx + 1}
+                      <td className="py-1.5 px-2 text-center border-r border-neutral-200/60 font-sans text-neutral-500">
+                        {idx === 0 ? <Zap className="w-3.5 h-3.5 text-blue-600 mx-auto" /> : idx + 1}
                       </td>
 
                       {/* ITEM Name + Autocomplete Trigger */}
-                      <td className="py-1 px-2 border-r border-neutral-200 relative font-sans">
+                      <td className="py-1 px-2 border-r border-neutral-200/60 relative font-sans">
                         <input
                           type="text"
                           data-item-input={idx}
@@ -1258,12 +1282,12 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                             });
                             setActiveItemSearchIndex(idx);
                           }}
-                          className="w-full text-xs font-normal text-neutral-900 bg-transparent px-1.5 py-1 rounded-[3px] focus:bg-white focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                          className="w-full text-xs font-normal text-neutral-900 bg-transparent px-1.5 py-1 rounded-md focus:bg-neutral-100 focus:outline-none focus:ring-1 focus:ring-black/20 placeholder:text-neutral-400"
                         />
                       </td>
 
                       {/* MRP */}
-                      <td className="py-1 px-1.5 text-right border-r border-neutral-200">
+                      <td className="py-1 px-1.5 text-right border-r border-neutral-200/60">
                         <input
                           type="number"
                           value={row.mrp === 0 ? '' : row.mrp}
@@ -1271,23 +1295,23 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                             handleUpdateRow(idx, { mrp: parseFloat(e.target.value) || 0 })
                           }
                           placeholder="0"
-                          className="w-full text-right bg-transparent px-1.5 py-1 rounded-[3px] focus:bg-white focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                          className="w-full text-right bg-transparent text-neutral-900 px-1.5 py-1 rounded-md focus:bg-neutral-100 focus:outline-none focus:ring-1 focus:ring-black/20 placeholder:text-neutral-400"
                         />
                       </td>
 
                       {/* SIZE */}
-                      <td className="py-1 px-1.5 border-r border-neutral-200">
+                      <td className="py-1 px-1.5 border-r border-neutral-200/60">
                         <input
                           type="text"
                           value={row.size}
                           onChange={(e) => handleUpdateRow(idx, { size: e.target.value })}
                           placeholder="Size/Pack"
-                          className="w-full font-sans bg-transparent px-1.5 py-1 rounded-[3px] focus:bg-white focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                          className="w-full font-sans bg-transparent text-neutral-900 px-1.5 py-1 rounded-md focus:bg-neutral-100 focus:outline-none focus:ring-1 focus:ring-black/20 placeholder:text-neutral-400"
                         />
                       </td>
 
                       {/* QTY */}
-                      <td className="py-1 px-1 text-center border-r border-neutral-200">
+                      <td className="py-1 px-1 text-center border-r border-neutral-200/60">
                         <input
                           type="number"
                           min="1"
@@ -1295,20 +1319,20 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                           onChange={(e) =>
                             handleUpdateRow(idx, { qty: Math.max(1, parseFloat(e.target.value) || 1) })
                           }
-                          className="w-12 text-center font-bold bg-transparent px-1 py-1 rounded-[3px] focus:bg-white focus:outline-none focus:ring-1 focus:ring-neutral-900 mx-auto block"
+                          className="w-12 text-center font-bold bg-transparent text-neutral-900 px-1 py-1 rounded-md focus:bg-neutral-100 focus:outline-none focus:ring-1 focus:ring-black/20 mx-auto block"
                         />
                       </td>
 
                       {/* UNIT */}
-                      <td className="py-1 px-1 text-center border-r border-neutral-200">
+                      <td className="py-1 px-1 text-center border-r border-neutral-200/60">
                         <select
                           value={row.unit}
                           onChange={(e) => handleUpdateRow(idx, { unit: e.target.value })}
-                          className="bg-transparent text-xs text-neutral-700 font-sans focus:outline-none cursor-pointer"
+                          className="bg-transparent text-xs text-neutral-800 font-sans focus:outline-none cursor-pointer"
                         >
-                          <option value="NONE">NONE</option>
+                          <option value="NONE" className="bg-white text-neutral-900">NONE</option>
                           {COMMON_UNITS.map((u) => (
-                            <option key={u} value={u}>
+                            <option key={u} value={u} className="bg-white text-neutral-900">
                               {u}
                             </option>
                           ))}
@@ -1316,7 +1340,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                       </td>
 
                       {/* PRICE / UNIT (With Tax / Without Tax toggle) */}
-                      <td className="py-1 px-1.5 text-right border-r border-neutral-200">
+                      <td className="py-1 px-1.5 text-right border-r border-neutral-200/60">
                         <div className="flex items-center space-x-1 justify-end">
                           <input
                             type="number"
@@ -1325,7 +1349,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                               handleUpdateRow(idx, { salePrice: parseFloat(e.target.value) || 0 })
                             }
                             placeholder="0"
-                            className="w-16 text-right font-medium bg-transparent px-1 py-1 rounded-[3px] focus:bg-white focus:outline-none focus:ring-1 focus:ring-neutral-900"
+                            className="w-16 text-right font-medium bg-transparent text-neutral-900 px-1 py-1 rounded-md focus:bg-neutral-100 focus:outline-none focus:ring-1 focus:ring-black/20 placeholder:text-neutral-400"
                           />
                           <select
                             value={row.priceWithTax ? 'WITH' : 'WITHOUT'}
@@ -1334,14 +1358,14 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                             }
                             className="text-[9px] bg-transparent text-neutral-500 border-none focus:outline-none cursor-pointer"
                           >
-                            <option value="WITH">With Tax</option>
-                            <option value="WITHOUT">Without Tax</option>
+                            <option value="WITH" className="bg-white text-neutral-900">With Tax</option>
+                            <option value="WITHOUT" className="bg-white text-neutral-900">Without Tax</option>
                           </select>
                         </div>
                       </td>
 
                       {/* DISCOUNT (% and Amount) */}
-                      <td className="py-1 px-1.5 text-right border-r border-neutral-200">
+                      <td className="py-1 px-1.5 text-right border-r border-neutral-200/60">
                         <div className="flex items-center space-x-1 justify-end">
                           <input
                             type="number"
@@ -1354,7 +1378,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                               })
                             }
                             placeholder="%"
-                            className="w-10 text-right bg-transparent px-1 py-1 rounded-[3px] focus:bg-white focus:outline-none focus:ring-1 focus:ring-neutral-900 text-[11px]"
+                            className="w-10 text-right bg-transparent text-neutral-900 px-1 py-1 rounded-md focus:bg-neutral-100 focus:outline-none focus:ring-1 focus:ring-black/20 text-[11px] placeholder:text-neutral-400"
                           />
                           <span className="text-[10px] text-neutral-500 w-11 text-right truncate">
                             {formatINR(discount)}
@@ -1363,7 +1387,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                       </td>
 
                       {/* TAX (% and Amount) */}
-                      <td className="py-1 px-1.5 text-right border-r border-neutral-200">
+                      <td className="py-1 px-1.5 text-right border-r border-neutral-200/60">
                         <div className="flex items-center space-x-1 justify-end">
                           <select
                             value={row.taxRate}
@@ -1372,10 +1396,10 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                                 taxRate: parseInt(e.target.value, 10) as TaxRate,
                               })
                             }
-                            className="text-[11px] bg-transparent focus:outline-none cursor-pointer"
+                            className="text-[11px] bg-transparent text-neutral-800 focus:outline-none cursor-pointer"
                           >
                             {GST_RATES.map((r) => (
-                              <option key={r} value={r}>
+                              <option key={r} value={r} className="bg-white text-neutral-900">
                                 {r}%
                               </option>
                             ))}
@@ -1387,7 +1411,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                       </td>
 
                       {/* AMOUNT */}
-                      <td className="py-1.5 px-3 text-right border-r border-neutral-200 font-semibold text-neutral-900">
+                      <td className="py-1.5 px-3 text-right border-r border-neutral-200/60 font-semibold text-neutral-900">
                         {formatINR(rowTotal)}
                       </td>
 
@@ -1396,7 +1420,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                         <button
                           type="button"
                           onClick={() => handleRemoveRow(idx)}
-                          className="p-1 rounded-[3px] text-neutral-400 hover:text-red-600 transition-colors cursor-pointer"
+                          className="p-1 rounded-md text-neutral-400 hover:text-rose-600 transition-colors cursor-pointer"
                           title="Delete Row"
                         >
                           <Trash2 className="w-3.5 h-3.5 mx-auto" />
@@ -1410,12 +1434,12 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
           </div>
 
           {/* TABLE FOOTER / CONTROLS (CRISP MINIMALIST SUMMARY) */}
-          <div className="bg-[#f8f9fa] border-t border-neutral-200 px-3 py-2 flex flex-wrap items-center justify-between gap-3 font-sans tabular-nums text-xs">
+          <div className="bg-neutral-50 border-t border-neutral-200/80 px-3 py-2 flex flex-wrap items-center justify-between gap-3 font-sans tabular-nums text-xs">
             <div className="flex items-center space-x-2">
               <button
                 type="button"
                 onClick={handleAddRow}
-                className="h-7 px-3 rounded-[5px] border border-neutral-300 bg-white text-neutral-800 font-sans font-semibold text-xs hover:bg-neutral-100 transition-all shadow-2xs flex items-center space-x-1.5 cursor-pointer"
+                className="h-7 px-3 rounded-lg border border-neutral-200 bg-white text-neutral-800 font-sans font-semibold text-xs hover:bg-neutral-100 transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>ADD ROW</span>
@@ -1423,7 +1447,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
               <button
                 type="button"
                 onClick={() => handleOpenAddProductModal(rows.length - 1)}
-                className="h-7 px-3 rounded-[5px] border border-blue-200 bg-blue-50/70 text-blue-700 font-sans font-semibold text-xs hover:bg-blue-100 transition-all shadow-2xs flex items-center space-x-1.5 cursor-pointer"
+                className="h-7 px-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 font-sans font-semibold text-xs hover:bg-blue-100 transition-all shadow-xs flex items-center space-x-1.5 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>+ ADD NEW ITEM</span>
@@ -1456,8 +1480,8 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
         {/* ========================================================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
           {/* COLUMN 1: TRANSPORT & TERMS (4 COLS) */}
-          <div className="lg:col-span-4 bg-white p-3 rounded-lg border border-neutral-200 shadow-2xs space-y-2.5">
-            <div className="flex items-center space-x-1.5 text-neutral-800 font-semibold text-xs">
+          <div className="lg:col-span-4 bg-white p-3.5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2.5">
+            <div className="flex items-center space-x-1.5 text-neutral-900 font-semibold text-xs">
               <Truck className="w-3.5 h-3.5 text-neutral-500" />
               <span>Transport & Delivery Details</span>
             </div>
@@ -1468,14 +1492,14 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                 placeholder="Transport Name"
                 value={transportName}
                 onChange={(e) => setTransportName(e.target.value)}
-                className="w-full h-7.5 px-2.5 rounded-md border border-neutral-200 bg-neutral-50/50 text-xs focus:bg-white focus:outline-none focus:border-neutral-900 transition-colors"
+                className="w-full h-7.5 px-2.5 rounded-xl border border-neutral-200 bg-neutral-50 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black transition-colors"
               />
               <input
                 type="text"
                 placeholder="Delivery Location"
                 value={deliveryLocation}
                 onChange={(e) => setDeliveryLocation(e.target.value)}
-                className="w-full h-7.5 px-2.5 rounded-md border border-neutral-200 bg-neutral-50/50 text-xs focus:bg-white focus:outline-none focus:border-neutral-900 transition-colors"
+                className="w-full h-7.5 px-2.5 rounded-xl border border-neutral-200 bg-neutral-50 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black transition-colors"
               />
             </div>
 
@@ -1485,38 +1509,38 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                 placeholder="Vehicle Number"
                 value={vehicleNumber}
                 onChange={(e) => setVehicleNumber(e.target.value)}
-                className="w-full h-7.5 px-2.5 rounded-md border border-neutral-200 bg-neutral-50/50 text-xs font-sans tabular-nums font-semibold uppercase tracking-wider focus:bg-white focus:outline-none focus:border-neutral-900 transition-colors"
+                className="w-full h-7.5 px-2.5 rounded-xl border border-neutral-200 bg-neutral-50 text-xs font-sans tabular-nums font-semibold uppercase tracking-wider text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black transition-colors"
               />
               <input
                 type="date"
                 placeholder="Delivery Date"
                 value={deliveryDate}
                 onChange={(e) => setDeliveryDate(e.target.value)}
-                className="w-full h-7.5 px-2 rounded-md border border-neutral-200 bg-neutral-50/50 text-xs focus:bg-white focus:outline-none focus:border-neutral-900 transition-colors"
+                className="w-full h-7.5 px-2 rounded-xl border border-neutral-200 bg-neutral-50 text-xs text-neutral-900 focus:outline-none focus:bg-white focus:border-black transition-colors"
               />
             </div>
 
             {/* Terms & Conditions Box */}
             <div className="space-y-1 pt-1.5 border-t border-neutral-100">
-              <label className="text-[10px] font-semibold text-neutral-600 uppercase tracking-wider block">Terms & Conditions</label>
+              <label className="text-[10px] font-semibold text-neutral-500 uppercase tracking-wider block">Terms & Conditions</label>
               <textarea
                 rows={2}
                 value={termsText}
                 onChange={(e) => setTermsText(e.target.value)}
                 placeholder="Terms & Conditions..."
-                className="w-full p-2 rounded-md border border-neutral-200 bg-neutral-50/50 text-[11px] font-sans text-neutral-800 focus:bg-white focus:outline-none focus:border-neutral-900 resize-none transition-colors"
+                className="w-full p-2 rounded-xl border border-neutral-200 bg-neutral-50 text-[11px] font-sans text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black resize-none transition-colors"
               />
             </div>
           </div>
 
           {/* COLUMN 2: ATTACHMENTS, NOTES & COPIES (4 COLS) */}
-          <div className="lg:col-span-4 bg-white p-3 rounded-lg border border-neutral-200 shadow-2xs space-y-2">
+          <div className="lg:col-span-4 bg-white p-3.5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2">
             <div className="space-y-1.5">
               {/* Add Description Button */}
               <button
                 type="button"
                 onClick={() => setShowDescriptionField(!showDescriptionField)}
-                className="w-full h-7.5 px-3 rounded-md border border-neutral-200 hover:border-neutral-400 text-neutral-700 font-medium text-xs flex items-center justify-center space-x-1.5 bg-neutral-50/60 hover:bg-neutral-100 transition-all cursor-pointer"
+                className="w-full h-7.5 px-3 rounded-xl border border-neutral-200 hover:border-neutral-300 text-neutral-700 hover:text-neutral-900 font-medium text-xs flex items-center justify-center space-x-1.5 bg-neutral-50 hover:bg-neutral-100 transition-all cursor-pointer"
               >
                 <FileText className="w-3.5 h-3.5" />
                 <span>+ ADD DESCRIPTION / NOTES</span>
@@ -1528,7 +1552,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                   placeholder="Enter invoice remarks or instructions..."
                   value={invoiceDescription}
                   onChange={(e) => setInvoiceDescription(e.target.value)}
-                  className="w-full p-2 rounded-md border border-neutral-200 bg-neutral-50/50 text-xs font-sans text-neutral-900 focus:bg-white focus:outline-none focus:border-neutral-900"
+                  className="w-full p-2 rounded-xl border border-neutral-200 bg-neutral-50 text-xs font-sans text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black"
                 />
               )}
 
@@ -1547,7 +1571,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
               <button
                 type="button"
                 onClick={() => imageInputRef.current?.click()}
-                className="w-full h-7.5 px-3 rounded-md border border-neutral-200 hover:border-neutral-400 text-neutral-700 font-medium text-xs flex items-center justify-center space-x-1.5 bg-neutral-50/60 hover:bg-neutral-100 transition-all cursor-pointer"
+                className="w-full h-7.5 px-3 rounded-xl border border-neutral-200 hover:border-neutral-300 text-neutral-700 hover:text-neutral-900 font-medium text-xs flex items-center justify-center space-x-1.5 bg-neutral-50 hover:bg-neutral-100 transition-all cursor-pointer"
               >
                 <ImageIcon className="w-3.5 h-3.5" />
                 <span>{attachedImageName ? `Image: ${attachedImageName}` : '+ ADD IMAGE'}</span>
@@ -1568,7 +1592,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
               <button
                 type="button"
                 onClick={() => docInputRef.current?.click()}
-                className="w-full h-7.5 px-3 rounded-md border border-neutral-200 hover:border-neutral-400 text-neutral-700 font-medium text-xs flex items-center justify-center space-x-1.5 bg-neutral-50/60 hover:bg-neutral-100 transition-all cursor-pointer"
+                className="w-full h-7.5 px-3 rounded-xl border border-neutral-200 hover:border-neutral-300 text-neutral-700 hover:text-neutral-900 font-medium text-xs flex items-center justify-center space-x-1.5 bg-neutral-50 hover:bg-neutral-100 transition-all cursor-pointer"
               >
                 <Paperclip className="w-3.5 h-3.5" />
                 <span>{attachedDocName ? `Doc: ${attachedDocName}` : '+ ADD DOCUMENT / PO'}</span>
@@ -1581,18 +1605,18 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
               <select
                 value={numberOfCopies}
                 onChange={(e) => setNumberOfCopies(e.target.value)}
-                className="w-full h-7.5 px-2 rounded-md border border-neutral-200 bg-neutral-50/50 text-xs font-medium text-neutral-800 focus:outline-none cursor-pointer"
+                className="w-full h-7.5 px-2 rounded-xl border border-neutral-200 bg-neutral-50 text-xs font-medium text-neutral-900 focus:outline-none focus:bg-white focus:border-black cursor-pointer"
               >
-                <option value="Original (For Recipient)">Original (For Recipient)</option>
-                <option value="Duplicate (For Transporter)">Duplicate (For Transporter)</option>
-                <option value="Triplicate (For Supplier)">Triplicate (For Supplier)</option>
-                <option value="Quadruplicate (For Extra Record)">Quadruplicate (For Extra Record)</option>
+                <option value="Original (For Recipient)" className="bg-white text-neutral-900">Original (For Recipient)</option>
+                <option value="Duplicate (For Transporter)" className="bg-white text-neutral-900">Duplicate (For Transporter)</option>
+                <option value="Triplicate (For Supplier)" className="bg-white text-neutral-900">Triplicate (For Supplier)</option>
+                <option value="Quadruplicate (For Extra Record)" className="bg-white text-neutral-900">Quadruplicate (For Extra Record)</option>
               </select>
             </div>
           </div>
 
           {/* COLUMN 3: CHARGES, ROUND-OFF & GRAND TOTAL (4 COLS) */}
-          <div className="lg:col-span-4 bg-white p-3 rounded-lg border border-neutral-200 shadow-2xs space-y-2.5 font-sans tabular-nums text-xs">
+          <div className="lg:col-span-4 bg-white p-3.5 rounded-2xl border border-neutral-200/80 shadow-xs space-y-2.5 font-sans tabular-nums text-xs">
             {/* Bill Discount */}
             <div className="flex items-center justify-between font-sans">
               <span className="text-neutral-500 text-xs">Discount</span>
@@ -1602,7 +1626,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                   placeholder="(%)"
                   value={billDiscountPercent === 0 ? '' : billDiscountPercent}
                   onChange={(e) => handleBillDiscountPercentChange(parseFloat(e.target.value) || 0)}
-                  className="w-14 h-7 px-1.5 text-right rounded-md border border-neutral-200 bg-neutral-50/50 text-xs focus:bg-white focus:outline-none focus:border-neutral-900"
+                  className="w-14 h-7 px-1.5 text-right rounded-lg border border-neutral-200 bg-neutral-50 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black"
                 />
                 <span className="text-neutral-400">-</span>
                 <input
@@ -1610,7 +1634,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                   placeholder="(₹)"
                   value={billDiscountAmount === 0 ? '' : billDiscountAmount}
                   onChange={(e) => handleBillDiscountAmountChange(parseFloat(e.target.value) || 0)}
-                  className="w-20 h-7 px-1.5 text-right rounded-md border border-neutral-200 bg-neutral-50/50 text-xs focus:bg-white focus:outline-none focus:border-neutral-900"
+                  className="w-20 h-7 px-1.5 text-right rounded-lg border border-neutral-200 bg-neutral-50 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black"
                 />
               </div>
             </div>
@@ -1622,7 +1646,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowShippingSac(!showShippingSac)}
-                  className="text-[10px] text-[#0071e3] hover:underline cursor-pointer"
+                  className="text-[10px] text-blue-600 hover:underline cursor-pointer"
                 >
                   {showShippingSac ? 'SAC: 996511' : 'Add SAC'}
                 </button>
@@ -1631,20 +1655,20 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                 <select
                   value={shippingTaxRate}
                   onChange={(e) => setShippingTaxRate(parseInt(e.target.value, 10) as TaxRate)}
-                  className="h-7 text-[10px] px-1 rounded-md border border-neutral-200 bg-neutral-50/50 focus:outline-none cursor-pointer"
+                  className="h-7 text-[10px] px-1 rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-800 focus:outline-none cursor-pointer"
                 >
-                  <option value={0}>GST@0%</option>
-                  <option value={5}>GST@5%</option>
-                  <option value={12}>GST@12%</option>
-                  <option value={18}>GST@18%</option>
-                  <option value={28}>GST@28%</option>
+                  <option value={0} className="bg-white text-neutral-900">GST@0%</option>
+                  <option value={5} className="bg-white text-neutral-900">GST@5%</option>
+                  <option value={12} className="bg-white text-neutral-900">GST@12%</option>
+                  <option value={18} className="bg-white text-neutral-900">GST@18%</option>
+                  <option value={28} className="bg-white text-neutral-900">GST@28%</option>
                 </select>
                 <input
                   type="number"
                   value={shippingAmount === 0 ? '' : shippingAmount}
                   onChange={(e) => setShippingAmount(parseFloat(e.target.value) || 0)}
                   placeholder="0"
-                  className="w-20 h-7 px-1.5 text-right rounded-md border border-neutral-200 bg-neutral-50/50 text-xs focus:bg-white focus:outline-none focus:border-neutral-900"
+                  className="w-20 h-7 px-1.5 text-right rounded-lg border border-neutral-200 bg-neutral-50 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black"
                 />
               </div>
             </div>
@@ -1656,7 +1680,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowPackagingSac(!showPackagingSac)}
-                  className="text-[10px] text-[#0071e3] hover:underline cursor-pointer"
+                  className="text-[10px] text-blue-600 hover:underline cursor-pointer"
                 >
                   {showPackagingSac ? 'SAC: 998599' : 'Add SAC'}
                 </button>
@@ -1665,20 +1689,20 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                 <select
                   value={packagingTaxRate}
                   onChange={(e) => setPackagingTaxRate(parseInt(e.target.value, 10) as TaxRate)}
-                  className="h-7 text-[10px] px-1 rounded-md border border-neutral-200 bg-neutral-50/50 focus:outline-none cursor-pointer"
+                  className="h-7 text-[10px] px-1 rounded-lg border border-neutral-200 bg-neutral-50 text-neutral-800 focus:outline-none cursor-pointer"
                 >
-                  <option value={0}>GST@0%</option>
-                  <option value={5}>GST@5%</option>
-                  <option value={12}>GST@12%</option>
-                  <option value={18}>GST@18%</option>
-                  <option value={28}>GST@28%</option>
+                  <option value={0} className="bg-white text-neutral-900">GST@0%</option>
+                  <option value={5} className="bg-white text-neutral-900">GST@5%</option>
+                  <option value={12} className="bg-white text-neutral-900">GST@12%</option>
+                  <option value={18} className="bg-white text-neutral-900">GST@18%</option>
+                  <option value={28} className="bg-white text-neutral-900">GST@28%</option>
                 </select>
                 <input
                   type="number"
                   value={packagingAmount === 0 ? '' : packagingAmount}
                   onChange={(e) => setPackagingAmount(parseFloat(e.target.value) || 0)}
                   placeholder="0"
-                  className="w-20 h-7 px-1.5 text-right rounded-md border border-neutral-200 bg-neutral-50/50 text-xs focus:bg-white focus:outline-none focus:border-neutral-900"
+                  className="w-20 h-7 px-1.5 text-right rounded-lg border border-neutral-200 bg-neutral-50 text-xs text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black"
                 />
               </div>
             </div>
@@ -1690,7 +1714,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                   type="checkbox"
                   checked={enableRoundOff}
                   onChange={(e) => setEnableRoundOff(e.target.checked)}
-                  className="rounded-[3px] border-neutral-300 text-[#0071e3] focus:ring-0 cursor-pointer"
+                  className="rounded-xs border-neutral-300 text-black focus:ring-0 cursor-pointer"
                 />
                 <span className="text-xs text-neutral-700 font-medium">Round Off</span>
               </label>
@@ -1700,9 +1724,9 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
             </div>
 
             {/* Large Grand Total Display */}
-            <div className="pt-2 border-t border-neutral-200 flex items-center justify-between">
+            <div className="pt-2 border-t border-neutral-200/80 flex items-center justify-between">
               <span className="font-sans font-bold text-sm text-neutral-900">Total</span>
-              <div className="px-3 py-1.5 bg-neutral-900 rounded-md text-right text-white">
+              <div className="px-3 py-1.5 bg-black rounded-xl text-right text-white shadow-xs">
                 <span className="text-lg font-bold font-sans tabular-nums">
                   {formatINR(totals.grandTotal)}
                 </span>
@@ -1715,15 +1739,24 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
       {/* ========================================================================= */}
       {/* 6. BOTTOM FLOATING ACTION BAR (SHARP EDGES, MACOS STATUSBAR AESTHETICS)    */}
       {/* ========================================================================= */}
-      <div className="bg-white border-t border-neutral-200 px-6 py-2.5 fixed bottom-0 left-0 right-0 z-20 flex items-center justify-between shadow-md">
-        {/* Left: Profit Insight Button */}
+      <div className="bg-white/95 backdrop-blur-xl border-t border-neutral-200/80 px-3 sm:px-6 py-2 sm:py-2.5 fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between shadow-lg">
+        {/* Left: Profit Insight (Desktop/Tablet) or Grand Total (Mobile) */}
         <div className="flex items-center space-x-2">
-          <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium">
+          {/* Mobile Grand Total preview */}
+          <div className="sm:hidden flex items-baseline space-x-1.5">
+            <span className="text-[10px] uppercase font-bold text-neutral-500">Total:</span>
+            <span className="font-bold text-neutral-900 text-sm tabular-nums">
+              {formatINR(totals.grandTotal)}
+            </span>
+          </div>
+
+          {/* Tablet & Laptop Profit Pill */}
+          <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium">
             <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
             <span>
               Bill Profit: <strong>+{formatINR(totals.totalProfit)}</strong>
             </span>
-            <span className="text-[10px] text-emerald-700 font-sans tabular-nums font-semibold">
+            <span className="text-[10px] text-emerald-600 font-sans tabular-nums font-semibold">
               ({totals.grandTotal > 0 ? ((totals.totalProfit / totals.grandTotal) * 100).toFixed(1) : 0}%)
             </span>
           </div>
@@ -1736,14 +1769,14 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
             <button
               type="button"
               onClick={() => setIsShareMenuOpen(!isShareMenuOpen)}
-              className="h-8 px-3.5 rounded-md border border-neutral-300 bg-white text-neutral-800 font-medium text-xs hover:bg-neutral-50 transition-all flex items-center space-x-1.5 cursor-pointer"
+              className="h-8 px-3.5 rounded-md border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700 font-medium text-xs transition-all flex items-center space-x-1.5 cursor-pointer shadow-xs"
             >
               <span>Share</span>
               <ChevronDown className="w-3 h-3 text-neutral-500" />
             </button>
 
             {isShareMenuOpen && (
-              <div className="absolute right-0 bottom-10 w-48 bg-white rounded-md border border-neutral-300 shadow-xl p-1 z-30 font-sans text-xs">
+              <div className="absolute right-0 bottom-10 w-48 bg-white rounded-xl border border-neutral-200 shadow-2xl p-1 z-30 font-sans text-xs">
                 <button
                   onClick={() => {
                     setIsShareMenuOpen(false);
@@ -1784,7 +1817,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                     const msg = generateInvoiceWhatsAppMessage(dummyInv, settings);
                     openWhatsApp(selectedCustomer.phone, msg);
                   }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-neutral-100 rounded-[3px] font-medium text-neutral-900 flex items-center space-x-2 cursor-pointer"
+                  className="w-full text-left px-3 py-1.5 hover:bg-neutral-100 rounded-lg font-medium text-neutral-700 flex items-center space-x-2 cursor-pointer transition-colors"
                 >
                   <Share2 className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Send via WhatsApp</span>
@@ -1794,9 +1827,9 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                     setIsShareMenuOpen(false);
                     window.print();
                   }}
-                  className="w-full text-left px-3 py-1.5 hover:bg-neutral-100 rounded-[3px] font-medium text-neutral-900 flex items-center space-x-2 cursor-pointer"
+                  className="w-full text-left px-3 py-1.5 hover:bg-neutral-100 rounded-lg font-medium text-neutral-700 flex items-center space-x-2 cursor-pointer transition-colors"
                 >
-                  <Printer className="w-3.5 h-3.5 text-neutral-600" />
+                  <Printer className="w-3.5 h-3.5 text-neutral-500" />
                   <span>Print Draft</span>
                 </button>
               </div>
@@ -1808,7 +1841,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
             <button
               type="button"
               onClick={onCancelEdit}
-              className="h-8 px-3.5 rounded-md border border-neutral-300 bg-white hover:bg-neutral-100 text-neutral-700 font-medium text-xs shadow-xs transition-all cursor-pointer"
+              className="h-8 px-3.5 rounded-md border border-neutral-200 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-medium text-xs shadow-xs transition-all cursor-pointer"
             >
               Cancel Edit
             </button>
@@ -1816,7 +1849,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
           <button
             type="button"
             onClick={handleProceedSave}
-            className="h-8 px-5 rounded-md bg-[#0071e3] hover:bg-[#0077ed] active:scale-[0.99] text-white font-semibold text-xs shadow-xs transition-all cursor-pointer flex items-center space-x-1.5"
+            className="h-8 px-5 rounded-md bg-black hover:bg-neutral-800 active:scale-[0.99] text-white font-semibold text-xs shadow-xs transition-all cursor-pointer flex items-center space-x-1.5"
           >
             <Check className="w-3.5 h-3.5" />
             <span>{initialInvoice ? 'Update & Save Invoice' : 'Save Invoice'}</span>
@@ -1858,9 +1891,9 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
           {/* GSTIN with Auto-verification */}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="text-[11px] font-semibold text-neutral-800">GSTIN (15 Digits)</label>
+              <label className="text-[11px] font-semibold text-neutral-700">GSTIN (15 Digits)</label>
               {isVerifyingPartyGST && (
-                <span className="text-[11px] text-[#0071e3] flex items-center gap-1 font-medium">
+                <span className="text-[11px] text-blue-600 flex items-center gap-1 font-medium">
                   <Loader2 className="w-3 h-3 animate-spin" />
                   Verifying Govt Portal...
                 </span>
@@ -1872,14 +1905,14 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
               placeholder="e.g. 23BSNPG0603H1Z7"
               value={partyGstin}
               onChange={(e) => handlePartyGstinChange(e.target.value)}
-              className="w-full h-8 px-3 rounded-md border border-neutral-300 bg-white text-xs font-sans tabular-nums font-bold text-neutral-900 uppercase focus:ring-1 focus:ring-black focus:outline-none"
+              className="w-full h-8 px-3 rounded-md border border-neutral-200 bg-neutral-50 text-xs font-sans tabular-nums font-bold text-neutral-900 uppercase focus:bg-white focus:border-black focus:outline-none"
             />
             {partyGstResult && (
               <div
                 className={`mt-1.5 p-2 rounded-md text-[11px] font-medium flex items-center gap-1.5 ${
                   partyGstResult.isValid
-                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                    : 'bg-rose-50 text-rose-800 border border-rose-200'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-rose-50 text-rose-700 border border-rose-200'
                 }`}
               >
                 {partyGstResult.isValid ? (
@@ -1899,77 +1932,77 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[11px] font-semibold text-neutral-800 block mb-1">Party Name *</label>
+              <label className="text-[11px] font-semibold text-neutral-700 block mb-1">Party Name *</label>
               <input
                 type="text"
                 required
                 placeholder="Full Contact Name"
                 value={partyName}
                 onChange={(e) => setPartyName(e.target.value)}
-                className="w-full h-8 px-3 rounded-md border border-neutral-300 bg-white text-xs text-neutral-900 focus:ring-1 focus:ring-black focus:outline-none"
+                className="w-full h-8 px-3 rounded-md border border-neutral-200 bg-neutral-50 text-xs text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:border-black focus:outline-none"
               />
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-neutral-800 block mb-1">Company / Trade Name</label>
+              <label className="text-[11px] font-semibold text-neutral-700 block mb-1">Company / Trade Name</label>
               <input
                 type="text"
                 placeholder="Firm Name (optional)"
                 value={partyCompany}
                 onChange={(e) => setPartyCompany(e.target.value)}
-                className="w-full h-8 px-3 rounded-md border border-neutral-300 bg-white text-xs text-neutral-900 focus:ring-1 focus:ring-black focus:outline-none"
+                className="w-full h-8 px-3 rounded-md border border-neutral-200 bg-neutral-50 text-xs text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:border-black focus:outline-none"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[11px] font-semibold text-neutral-800 block mb-1">Phone Number *</label>
+              <label className="text-[11px] font-semibold text-neutral-700 block mb-1">Phone Number *</label>
               <input
                 type="tel"
                 required
                 placeholder="10 digit mobile"
                 value={partyPhone}
                 onChange={(e) => setPartyPhone(e.target.value)}
-                className="w-full h-8 px-3 rounded-md border border-neutral-300 bg-white text-xs font-sans tabular-nums text-neutral-900 focus:ring-1 focus:ring-black focus:outline-none"
+                className="w-full h-8 px-3 rounded-md border border-neutral-200 bg-neutral-50 text-xs font-sans tabular-nums text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:border-black focus:outline-none"
               />
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-neutral-800 block mb-1">PAN Number</label>
+              <label className="text-[11px] font-semibold text-neutral-700 block mb-1">PAN Number</label>
               <input
                 type="text"
                 maxLength={10}
                 placeholder="ABCDE1234F"
                 value={partyPan}
                 onChange={(e) => setPartyPan(e.target.value.toUpperCase())}
-                className="w-full h-8 px-3 rounded-md border border-neutral-300 bg-white text-xs font-sans tabular-nums text-neutral-900 focus:ring-1 focus:ring-black focus:outline-none"
+                className="w-full h-8 px-3 rounded-md border border-neutral-200 bg-neutral-50 text-xs font-sans tabular-nums text-neutral-900 uppercase placeholder:text-neutral-400 focus:bg-white focus:border-black focus:outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-[11px] font-semibold text-neutral-800 block mb-1">Billing Address</label>
+            <label className="text-[11px] font-semibold text-neutral-700 block mb-1">Billing Address</label>
             <input
               type="text"
               placeholder="Shop/Office street address"
               value={partyAddress}
               onChange={(e) => setPartyAddress(e.target.value)}
-              className="w-full h-8 px-3 rounded-md border border-neutral-300 bg-white text-xs text-neutral-900 focus:ring-1 focus:ring-black focus:outline-none"
+              className="w-full h-8 px-3 rounded-md border border-neutral-200 bg-neutral-50 text-xs text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:border-black focus:outline-none"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="text-[11px] font-semibold text-neutral-800 block mb-1">City</label>
+              <label className="text-[11px] font-semibold text-neutral-700 block mb-1">City</label>
               <input
                 type="text"
                 placeholder="City"
                 value={partyCity}
                 onChange={(e) => setPartyCity(e.target.value)}
-                className="w-full h-8 px-3 rounded-md border border-neutral-300 bg-white text-xs text-neutral-900 focus:ring-1 focus:ring-black focus:outline-none"
+                className="w-full h-8 px-3 rounded-md border border-neutral-200 bg-neutral-50 text-xs text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:border-black focus:outline-none"
               />
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-neutral-800 block mb-1">State</label>
+              <label className="text-[11px] font-semibold text-neutral-700 block mb-1">State</label>
               <select
                 value={partyState}
                 onChange={(e) => {
@@ -1977,25 +2010,25 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                   setPartyState(e.target.value);
                   setPartyStateCode(s ? s.code : '23');
                 }}
-                className="w-full h-8 px-2 rounded-md border border-neutral-300 bg-white text-xs text-neutral-900 focus:ring-1 focus:ring-black focus:outline-none cursor-pointer"
+                className="w-full h-8 px-2 rounded-md border border-neutral-200 bg-neutral-50 text-xs text-neutral-900 focus:bg-white focus:border-black focus:outline-none cursor-pointer"
               >
-                <option value="">Select State</option>
+                <option value="" className="bg-white text-neutral-900">Select State</option>
                 {INDIAN_STATES.map((st) => (
-                  <option key={st.code} value={st.name}>
+                  <option key={st.code} value={st.name} className="bg-white text-neutral-900">
                     {st.name}
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-neutral-800 block mb-1">Pincode</label>
+              <label className="text-[11px] font-semibold text-neutral-700 block mb-1">Pincode</label>
               <input
                 type="text"
                 maxLength={6}
                 placeholder="Pincode"
                 value={partyPincode}
                 onChange={(e) => setPartyPincode(e.target.value)}
-                className="w-full h-8 px-3 rounded-md border border-neutral-300 bg-white text-xs font-sans tabular-nums text-neutral-900 focus:ring-1 focus:ring-black focus:outline-none"
+                className="w-full h-8 px-3 rounded-md border border-neutral-200 bg-neutral-50 text-xs font-sans tabular-nums text-neutral-900 placeholder:text-neutral-400 focus:bg-white focus:border-black focus:outline-none"
               />
             </div>
           </div>
@@ -2004,13 +2037,13 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
             <button
               type="button"
               onClick={() => setShowAddCustomerModal(false)}
-              className="px-3.5 py-1.5 rounded-md border border-neutral-300 hover:bg-neutral-100 text-xs font-medium text-neutral-800 transition-all cursor-pointer"
+              className="px-3.5 py-1.5 rounded-md border border-neutral-200 hover:bg-neutral-100 text-xs font-medium text-neutral-700 transition-all cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-1.5 rounded-md bg-neutral-900 hover:bg-black text-white text-xs font-semibold transition-all cursor-pointer"
+              className="px-5 py-1.5 rounded-md bg-black hover:bg-neutral-800 text-white text-xs font-semibold transition-all cursor-pointer shadow-xs"
             >
               Save Party
             </button>
@@ -2031,10 +2064,10 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
             width: `${productDropdownPos.width}px`,
             zIndex: 99999,
           }}
-          className="bg-white rounded-lg border border-neutral-300 shadow-2xl p-1.5 font-sans max-h-72 overflow-y-auto ring-1 ring-black/10 animate-in fade-in zoom-in-95 duration-100"
+          className="bg-white rounded-xl border border-neutral-200 shadow-2xl p-1.5 font-sans max-h-72 overflow-y-auto ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-100"
         >
           {/* Header with Results Count */}
-          <div className="px-2 py-1 text-[10px] uppercase font-bold text-neutral-400 tracking-wider flex items-center justify-between border-b border-neutral-100">
+          <div className="px-2 py-1 text-[10px] uppercase font-bold text-neutral-500 tracking-wider flex items-center justify-between border-b border-neutral-200">
             <span>Select Product / Item</span>
             <span className="text-[10px] text-neutral-500 tabular-nums font-semibold">
               {currentSearchProducts.length} Available
@@ -2042,7 +2075,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
           </div>
 
           {/* Product Items List */}
-          <div className="divide-y divide-neutral-50 max-h-48 overflow-y-auto mt-1">
+          <div className="divide-y divide-neutral-100 max-h-48 overflow-y-auto mt-1">
             {currentSearchProducts.map((p) => (
               <button
                 key={p.id}
@@ -2051,10 +2084,10 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                   e.preventDefault();
                   handleSelectProductForRow(productDropdownPos.rowIdx, p);
                 }}
-                className="w-full text-left p-2 hover:bg-neutral-100/90 rounded-[4px] flex items-center justify-between cursor-pointer transition-colors group"
+                className="w-full text-left p-2 hover:bg-neutral-100 rounded-lg flex items-center justify-between cursor-pointer transition-colors group"
               >
                 <div>
-                  <p className="font-semibold text-xs text-neutral-900 group-hover:text-black">{p.name}</p>
+                  <p className="font-semibold text-xs text-neutral-900 group-hover:text-blue-600">{p.name}</p>
                   <p className="text-[10px] text-neutral-500 tabular-nums">
                     {p.hsn ? `HSN: ${p.hsn} • ` : ''}Stock: <span className={p.stock <= 5 ? 'text-amber-600 font-bold' : 'text-neutral-700 font-medium'}>{p.stock} {p.unit}</span>
                   </p>
@@ -2066,7 +2099,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
             ))}
 
             {currentSearchProducts.length === 0 && (
-              <div className="p-3 text-center text-xs text-neutral-500">
+              <div className="p-3 text-center text-xs text-neutral-400">
                 No matching product found in inventory
               </div>
             )}
@@ -2080,9 +2113,9 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
               const typedName = rows[productDropdownPos.rowIdx]?.name || '';
               handleOpenAddProductModal(productDropdownPos.rowIdx, typedName);
             }}
-            className="w-full text-left p-2 mt-1 border-t border-neutral-200 bg-neutral-50 hover:bg-neutral-100 text-neutral-900 font-semibold text-xs rounded-[4px] flex items-center space-x-2 cursor-pointer transition-colors"
+            className="w-full text-left p-2 mt-1 border-t border-neutral-200 bg-neutral-50 hover:bg-neutral-100 text-neutral-900 font-semibold text-xs rounded-lg flex items-center space-x-2 cursor-pointer transition-colors"
           >
-            <Plus className="w-3.5 h-3.5 text-[#0071e3]" />
+            <Plus className="w-3.5 h-3.5 text-blue-600" />
             <span>
               + Add {rows[productDropdownPos.rowIdx]?.name ? `"${rows[productDropdownPos.rowIdx].name}"` : 'New Item'} to Inventory
             </span>
@@ -2103,14 +2136,14 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
       >
         <form onSubmit={handleSaveQuickProduct} className="space-y-3.5 text-xs font-sans">
           <div>
-            <label className="block font-semibold text-neutral-800 mb-1">Product / Item Name *</label>
+            <label className="block font-semibold text-neutral-700 mb-1">Product / Item Name *</label>
             <input
               type="text"
               required
               value={newProdName}
               onChange={(e) => setNewProdName(e.target.value)}
               placeholder="e.g. Shyamji Royal Mukhwas 100g"
-              className="w-full h-8 px-2.5 rounded-md border border-neutral-300 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-neutral-900 text-xs font-medium"
+              className="w-full h-8 px-2.5 rounded-md border border-neutral-200 bg-neutral-50 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black text-xs font-medium"
             />
           </div>
 
@@ -2122,7 +2155,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                 value={newProdHsn}
                 onChange={(e) => setNewProdHsn(e.target.value)}
                 placeholder="210690"
-                className="w-full h-8 px-2.5 rounded-md border border-neutral-300 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-neutral-900 text-xs font-sans tabular-nums"
+                className="w-full h-8 px-2.5 rounded-md border border-neutral-200 bg-neutral-50 text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:bg-white focus:border-black text-xs font-sans tabular-nums"
               />
             </div>
             <div>
@@ -2130,10 +2163,10 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
               <select
                 value={newProdUnit}
                 onChange={(e) => setNewProdUnit(e.target.value)}
-                className="w-full h-8 px-2 rounded-md border border-neutral-300 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-neutral-900 text-xs cursor-pointer font-medium"
+                className="w-full h-8 px-2 rounded-md border border-neutral-200 bg-neutral-50 text-neutral-900 focus:outline-none focus:bg-white focus:border-black text-xs cursor-pointer font-medium"
               >
                 {COMMON_UNITS.map((u) => (
-                  <option key={u} value={u}>
+                  <option key={u} value={u} className="bg-white text-neutral-900">
                     {u}
                   </option>
                 ))}
@@ -2142,7 +2175,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
           </div>
 
           {/* Pricing Grid */}
-          <div className="p-3 bg-neutral-50 rounded-lg border border-neutral-200 space-y-2.5">
+          <div className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] uppercase font-bold text-neutral-500 tracking-wider">
                 Pricing & GST Mode
@@ -2153,8 +2186,8 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                   onClick={() => setNewProdTaxType('EXCLUSIVE')}
                   className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer ${
                     newProdTaxType === 'EXCLUSIVE'
-                      ? 'bg-neutral-900 text-white'
-                      : 'bg-neutral-200 text-neutral-700'
+                      ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80'
+                      : 'bg-neutral-200/60 text-neutral-600 hover:text-neutral-900'
                   }`}
                 >
                   Without Tax
@@ -2164,8 +2197,8 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                   onClick={() => setNewProdTaxType('INCLUSIVE')}
                   className={`px-2 py-0.5 rounded text-[10px] font-semibold transition-all cursor-pointer ${
                     newProdTaxType === 'INCLUSIVE'
-                      ? 'bg-neutral-900 text-white'
-                      : 'bg-neutral-200 text-neutral-700'
+                      ? 'bg-white text-neutral-900 shadow-xs border border-neutral-200/80'
+                      : 'bg-neutral-200/60 text-neutral-600 hover:text-neutral-900'
                   }`}
                 >
                   With Tax (MRP)
@@ -2184,7 +2217,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                   value={newProdSalePrice === 0 ? '' : newProdSalePrice}
                   onChange={(e) => setNewProdSalePrice(parseFloat(e.target.value) || 0)}
                   placeholder="0.00"
-                  className="w-full h-8 px-2 rounded-md border border-neutral-300 bg-white font-sans tabular-nums font-bold text-neutral-900 focus:outline-none focus:border-neutral-900"
+                  className="w-full h-8 px-2 rounded-md border border-neutral-200 bg-white font-sans tabular-nums font-bold text-neutral-900 focus:outline-none focus:border-black"
                 />
               </div>
               <div>
@@ -2196,7 +2229,7 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                   value={newProdMrp === 0 ? '' : newProdMrp}
                   onChange={(e) => setNewProdMrp(parseFloat(e.target.value) || 0)}
                   placeholder="0.00"
-                  className="w-full h-8 px-2 rounded-md border border-neutral-300 bg-white font-sans tabular-nums text-neutral-900 focus:outline-none focus:border-neutral-900"
+                  className="w-full h-8 px-2 rounded-md border border-neutral-200 bg-white font-sans tabular-nums text-neutral-900 focus:outline-none focus:border-black"
                 />
               </div>
               <div>
@@ -2204,10 +2237,10 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
                 <select
                   value={newProdTaxRate}
                   onChange={(e) => setNewProdTaxRate(parseInt(e.target.value, 10) as TaxRate)}
-                  className="w-full h-8 px-2 rounded-md border border-neutral-300 bg-white text-xs cursor-pointer font-medium"
+                  className="w-full h-8 px-2 rounded-md border border-neutral-200 bg-white text-neutral-900 text-xs cursor-pointer font-medium focus:outline-none focus:border-black"
                 >
                   {GST_RATES.map((r) => (
-                    <option key={r} value={r}>
+                    <option key={r} value={r} className="bg-white text-neutral-900">
                       {r}% GST
                     </option>
                   ))}
@@ -2220,13 +2253,13 @@ export const BillingPOS: React.FC<BillingPOSProps> = ({
             <button
               type="button"
               onClick={() => setShowAddProductModal(false)}
-              className="h-8 px-3 rounded-md border border-neutral-300 text-neutral-700 font-medium text-xs hover:bg-neutral-100 transition-colors cursor-pointer"
+              className="h-8 px-3 rounded-md border border-neutral-200 text-neutral-700 font-medium text-xs hover:bg-neutral-100 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="h-8 px-4 rounded-md bg-neutral-900 hover:bg-black text-white font-semibold text-xs transition-colors shadow-2xs cursor-pointer"
+              className="h-8 px-4 rounded-md bg-black hover:bg-neutral-800 text-white font-semibold text-xs transition-colors shadow-xs cursor-pointer"
             >
               Save & Add to Sale
             </button>

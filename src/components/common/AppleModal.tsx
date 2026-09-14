@@ -53,17 +53,17 @@ export const AppleModal: React.FC<AppleModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-            className={`relative w-full ${maxWidth} bg-white/95 backdrop-blur-2xl rounded-3xl shadow-apple-modal border border-white/80 overflow-hidden z-10 my-8 print:m-0 print:p-0 print:border-none print:shadow-none print:bg-white print:w-full print:max-w-none`}
+            className={`relative w-full ${maxWidth} bg-white text-neutral-900 rounded-3xl shadow-2xl border border-black/[0.08] overflow-hidden z-10 my-8 print:m-0 print:p-0 print:border-none print:shadow-none print:bg-white print:text-black print:w-full print:max-w-none`}
           >
             {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-gray-100/80 flex items-center justify-between no-print">
+            <div className="px-6 py-5 border-b border-black/[0.06] flex items-center justify-between no-print">
               <div>
-                <h3 className="text-lg font-semibold text-black tracking-tight">{title}</h3>
-                {subtitle && <p className="text-xs text-[#86868b] mt-0.5">{subtitle}</p>}
+                <h3 className="text-lg font-semibold text-neutral-900 tracking-tight">{title}</h3>
+                {subtitle && <p className="text-xs text-neutral-500 mt-0.5">{subtitle}</p>}
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 active:scale-95 flex items-center justify-center text-[#424245] transition-all cursor-pointer"
+                className="w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 active:scale-95 flex items-center justify-center text-neutral-600 transition-all cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>

@@ -4,12 +4,14 @@ import { AppleModal } from '../common/AppleModal';
 import { Invoice, BusinessSettings } from '../../types';
 import { formatINR, formatDate, numberToWordsINR } from '../../utils/formatters';
 import { openWhatsApp, generateInvoiceWhatsAppMessage } from '../../services/whatsapp';
+import { downloadInvoicePDF } from '../../services/invoicePdf';
 import {
   Printer,
   Share2,
   CheckCircle2,
   Copy,
   Layers,
+  Download,
 } from 'lucide-react';
 
 interface InvoicePreviewModalProps {
@@ -136,6 +138,8 @@ export const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
     }
   }, [invoice, settings]);
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
   if (!invoice) return null;
 
   const handlePrint = () => {
@@ -145,6 +149,19 @@ export const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
   const handleWhatsApp = () => {
     const msg = generateInvoiceWhatsAppMessage(invoice, settings);
     openWhatsApp(invoice.customer.phone || '', msg);
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!invoice) return;
+    setIsDownloading(true);
+    try {
+      await downloadInvoicePDF(invoice, settings);
+    } catch (err) {
+      console.error('Invoice download error:', err);
+      alert('Could not generate PDF. Please try Print -> Save as PDF.');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const isInterState = invoice.isInterState;
@@ -173,25 +190,25 @@ export const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
     >
       <div className="space-y-4">
         {/* Controls Bar (Hidden during print) */}
-        <div className="no-print flex flex-wrap items-center justify-between gap-3 p-3 bg-neutral-100 rounded-2xl border border-neutral-200">
+        <div className="no-print flex flex-wrap items-center justify-between gap-3 p-3 bg-neutral-50 rounded-2xl border border-neutral-200">
           {/* Format Switcher */}
           <div className="flex items-center space-x-1 bg-white p-1 rounded-xl border border-neutral-200 shadow-xs">
             <button
               onClick={() => setFormat('A4')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 format === 'A4'
                   ? 'bg-black text-white shadow-xs font-bold'
-                  : 'text-neutral-600 hover:text-black'
+                  : 'text-neutral-500 hover:text-neutral-900'
               }`}
             >
               Standard A4 GST
             </button>
             <button
               onClick={() => setFormat('THERMAL')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                 format === 'THERMAL'
                   ? 'bg-black text-white shadow-xs font-bold'
-                  : 'text-neutral-600 hover:text-black'
+                  : 'text-neutral-500 hover:text-neutral-900'
               }`}
             >
               80mm Thermal POS
@@ -204,10 +221,10 @@ export const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedCopy('ORIGINAL')}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                   selectedCopy === 'ORIGINAL'
                     ? 'bg-black text-white'
-                    : 'text-neutral-600 hover:text-black'
+                    : 'text-neutral-500 hover:text-neutral-900'
                 }`}
               >
                 Original
@@ -215,10 +232,10 @@ export const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedCopy('DUPLICATE')}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                   selectedCopy === 'DUPLICATE'
                     ? 'bg-black text-white'
-                    : 'text-neutral-600 hover:text-black'
+                    : 'text-neutral-500 hover:text-neutral-900'
                 }`}
               >
                 Duplicate
@@ -226,10 +243,10 @@ export const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedCopy('TRIPLICATE')}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                   selectedCopy === 'TRIPLICATE'
                     ? 'bg-black text-white'
-                    : 'text-neutral-600 hover:text-black'
+                    : 'text-neutral-500 hover:text-neutral-900'
                 }`}
               >
                 Triplicate
@@ -240,8 +257,18 @@ export const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
           {/* Action Buttons */}
           <div className="flex items-center space-x-2">
             <button
+              onClick={handleDownloadPDF}
+              disabled={isDownloading}
+              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+              title="Download PDF directly to local storage"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>{isDownloading ? 'Downloading...' : 'Download PDF'}</span>
+            </button>
+
+            <button
               onClick={handleWhatsApp}
-              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-apple-subtle transition-all active:scale-95 cursor-pointer"
+              className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>WhatsApp Bill</span>
@@ -249,7 +276,7 @@ export const InvoicePreviewModal: React.FC<InvoicePreviewModalProps> = ({
 
             <button
               onClick={handlePrint}
-              className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-black hover:bg-neutral-900 text-white text-xs font-semibold shadow-apple-subtle transition-all active:scale-95 cursor-pointer"
+              className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-black hover:bg-neutral-800 text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Print Invoice</span>

@@ -84,3 +84,24 @@ export function numberToWordsINR(amount: number): string {
 
   return ('Rupees ' + words.trim() + ' Only');
 }
+
+/**
+ * Returns date in YYYY-MM-DD format using client's local timezone (not UTC),
+ * preventing early morning date drift in India (IST / UTC+5:30).
+ */
+export function getLocalDateISO(d: Date = new Date()): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Returns month in YYYY-MM format using client's local timezone.
+ */
+export function getLocalMonthISO(d: Date = new Date()): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+

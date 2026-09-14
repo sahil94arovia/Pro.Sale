@@ -124,7 +124,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         spread: 70,
         origin: { y: 0.6 },
       });
-    } catch (e) {
+    } catch {
       // ignore
     }
 
@@ -145,13 +145,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       subtitle={`Billing Total: ${formatINR(grandTotal)} for ${customerName || 'Walk-in Client'}`}
       maxWidth="max-w-xl"
     >
-      <div className="space-y-6">
+      <div className="space-y-5 text-xs font-sans">
         {/* Payment Mode Selector Pills */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-2">
+          <label className="block text-xs font-semibold text-neutral-700 mb-2">
             Select Settlement Mode
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {[
               { id: 'CASH', label: 'Cash', icon: Banknote },
               { id: 'UPI', label: 'UPI QR Code', icon: QrCode },
@@ -167,13 +167,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   key={item.id}
                   type="button"
                   onClick={() => handleModeSelect(item.id as PaymentMode)}
-                  className={`flex items-center justify-center space-x-2 p-3 rounded-2xl border text-xs font-medium transition-all ${
+                  className={`flex items-center justify-center space-x-2 p-3 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-black text-white border-black shadow-apple-subtle'
-                      : 'bg-white hover:bg-gray-50 text-black border-gray-200'
+                      ? 'bg-black text-white font-semibold border-black shadow-xs'
+                      : 'bg-white hover:bg-neutral-50 text-neutral-700 border-neutral-200 shadow-xs'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-4 h-4 shrink-0" />
                   <span>{item.label}</span>
                 </button>
               );
@@ -183,20 +183,22 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {/* UPI QR Code Dynamic Display */}
         {mode === 'UPI' && (
-          <div className="p-4 bg-white rounded-2xl border border-gray-200 flex flex-col items-center justify-center text-center">
-            <span className="text-xs font-semibold text-black">Scan & Pay with any UPI App</span>
-            <span className="text-[11px] text-gray-500 mb-2">Google Pay, PhonePe, Paytm, BHIM</span>
+          <div className="p-4 bg-neutral-50 rounded-xl border border-neutral-200 flex flex-col items-center justify-center text-center">
+            <span className="text-xs font-semibold text-neutral-900">Scan & Pay with any UPI App</span>
+            <span className="text-[11px] text-neutral-500 mb-2.5">Google Pay, PhonePe, Paytm, BHIM</span>
             {qrDataUrl ? (
-              <img src={qrDataUrl} alt="UPI QR" className="w-44 h-44 rounded-xl border border-gray-100 shadow-sm" />
+              <div className="p-3 bg-white rounded-xl border border-neutral-200 shadow-xs">
+                <img src={qrDataUrl} alt="UPI QR" className="w-40 h-40 rounded-lg" />
+              </div>
             ) : (
-              <div className="w-44 h-44 bg-gray-100 rounded-xl flex items-center justify-center text-xs text-gray-400">
+              <div className="w-44 h-44 bg-neutral-100 border border-neutral-200 rounded-xl flex items-center justify-center text-xs text-neutral-400">
                 Generating QR...
               </div>
             )}
-            <span className="text-xs font-sans tabular-nums font-medium text-black mt-2">
+            <span className="text-xs font-sans tabular-nums font-medium text-neutral-600 mt-2.5">
               UPI ID: {settings.upiId || 'Not configured'}
             </span>
-            <span className="text-xs font-bold text-gray-800 mt-0.5 font-sans tabular-nums">
+            <span className="text-xs font-bold text-neutral-900 mt-0.5 font-sans tabular-nums">
               Pay Amount: {formatINR(paidAmount)}
             </span>
           </div>
@@ -204,13 +206,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {/* Split Payment Editor */}
         {mode === 'SPLIT' && (
-          <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-3">
+          <div className="p-4 bg-neutral-50 rounded-xl border border-neutral-200 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-black">Split Payment Breakdown</span>
+              <span className="text-xs font-semibold text-neutral-900">Split Payment Breakdown</span>
               <button
                 type="button"
                 onClick={handleAddSplit}
-                className="flex items-center space-x-1 text-xs text-black font-medium hover:underline"
+                className="flex items-center space-x-1 text-xs text-blue-600 font-medium hover:underline cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Row</span>
@@ -226,34 +228,35 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     up[idx].method = e.target.value as any;
                     setSplits(up);
                   }}
-                  className="px-2.5 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none font-medium"
+                  className="px-2.5 py-2 rounded-lg border border-neutral-200 text-xs bg-white text-neutral-900 focus:outline-none focus:border-black font-medium cursor-pointer"
                 >
-                  <option value="CASH">Cash</option>
-                  <option value="UPI">UPI</option>
-                  <option value="BANK">Bank</option>
-                  <option value="CHEQUE">Cheque</option>
+                  <option value="CASH" className="bg-white text-neutral-900">Cash</option>
+                  <option value="UPI" className="bg-white text-neutral-900">UPI</option>
+                  <option value="BANK" className="bg-white text-neutral-900">Bank</option>
+                  <option value="CHEQUE" className="bg-white text-neutral-900">Cheque</option>
                 </select>
                 <input
                   type="number"
                   value={entry.amount || ''}
                   onChange={(e) => handleSplitAmountChange(idx, parseFloat(e.target.value) || 0)}
-                  className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none font-sans tabular-nums"
+                  className="flex-1 px-3 py-2 rounded-lg border border-neutral-200 text-xs bg-white text-neutral-900 focus:outline-none focus:border-black font-sans tabular-nums"
                 />
                 <input
                   type="text"
+                  placeholder="Ref No."
                   value={entry.referenceNo || ''}
                   onChange={(e) => {
                     const up = [...splits];
                     up[idx].referenceNo = e.target.value;
                     setSplits(up);
                   }}
-                  className="w-28 px-2.5 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none"
+                  className="w-28 px-2.5 py-2 rounded-lg border border-neutral-200 text-xs bg-white text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-black"
                 />
                 {splits.length > 1 && (
                   <button
                     type="button"
                     onClick={() => handleRemoveSplit(idx)}
-                    className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
+                    className="p-1.5 text-neutral-400 hover:text-rose-600 transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -264,30 +267,30 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         )}
 
         {/* Amount Received & Balance Summary */}
-        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-2 font-sans">
+        <div className="p-4 bg-neutral-50 rounded-xl border border-neutral-200 space-y-2.5 font-sans">
           <div className="flex justify-between items-center text-xs">
-            <span className="text-gray-500">Bill Grand Total:</span>
-            <span className="font-semibold text-gray-800 tabular-nums">{formatINR(grandTotal)}</span>
+            <span className="text-neutral-500">Bill Grand Total:</span>
+            <span className="font-semibold text-neutral-900 tabular-nums">{formatINR(grandTotal)}</span>
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold text-gray-700">Amount Received Now:</span>
+            <span className="text-xs font-semibold text-neutral-700">Amount Received Now:</span>
             <div className="w-36">
               <input
                 type="number"
                 value={paidAmount || 0}
                 disabled={mode === 'CREDIT' || mode === 'SPLIT'}
                 onChange={(e) => setPaidAmount(parseFloat(e.target.value) || 0)}
-                className="w-full text-right font-sans tabular-nums font-bold text-sm px-3 py-1.5 rounded-xl border border-gray-300 bg-white focus:ring-2 focus:ring-[#0071e3] focus:outline-none"
+                className="w-full text-right font-sans tabular-nums font-bold text-sm px-3 py-1.5 rounded-lg border border-neutral-200 bg-white text-neutral-900 focus:border-black focus:outline-none disabled:opacity-60"
               />
             </div>
           </div>
 
-          <div className="flex justify-between items-center pt-2 border-t border-gray-200 text-xs">
-            <span className="font-medium text-gray-600">Pending Balance Due / Credit:</span>
+          <div className="flex justify-between items-center pt-2 border-t border-neutral-200 text-xs">
+            <span className="font-medium text-neutral-600">Pending Balance Due / Credit:</span>
             <span
               className={`font-bold font-sans tabular-nums ${
-                balanceRemaining > 0 ? 'text-amber-600' : 'text-emerald-600'
+                balanceRemaining > 0 ? 'text-rose-600' : 'text-emerald-600'
               }`}
             >
               {formatINR(balanceRemaining)}
@@ -297,23 +300,25 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {/* Payment Notes / Reference */}
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1">
+          <label className="block text-xs font-semibold text-neutral-700 mb-1">
             Reference / Cheque / Transaction Note (Optional)
           </label>
           <input
             type="text"
             value={notes}
+            placeholder="e.g. UTR / Cheque No."
             onChange={(e) => setNotes(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs bg-gray-50 focus:bg-white focus:ring-2 focus:ring-[#0071e3] focus:outline-none"
+            className="w-full px-3 py-2 rounded-lg border border-neutral-200 text-xs bg-white text-neutral-900 placeholder:text-neutral-400 focus:border-black focus:outline-none"
           />
         </div>
 
         {/* Confirm Button */}
         <button
+          type="button"
           onClick={handleSubmit}
-          className="w-full flex items-center justify-center space-x-2 py-3.5 rounded-2xl bg-black hover:bg-neutral-900 active:scale-[0.99] text-white font-medium text-sm shadow-apple-card transition-all cursor-pointer"
+          className="w-full flex items-center justify-center space-x-2 py-3 rounded-xl bg-black hover:bg-neutral-800 active:scale-[0.99] text-white font-semibold text-xs shadow-xs transition-all cursor-pointer"
         >
-          <CheckCircle2 className="w-5 h-5" />
+          <CheckCircle2 className="w-4 h-4" />
           <span>Confirm & Complete Billing ({formatINR(paidAmount)} Paid)</span>
         </button>
       </div>

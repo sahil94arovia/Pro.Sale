@@ -274,7 +274,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </p>
           <button
             onClick={() => setActiveTab('settings')}
-            className="mt-3 w-full py-2 px-3 rounded-xl bg-[#2563eb] hover:bg-blue-600 active:scale-98 text-white font-semibold text-xs transition-all shadow-sm border border-white/20"
+            className="mt-3 w-full py-2 px-3 rounded-xl bg-[#2563eb] hover:bg-blue-600 active:scale-98 text-white font-semibold text-xs transition-all shadow-sm border border-blue-400/30"
           >
             Upgrade premium
           </button>

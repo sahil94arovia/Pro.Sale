@@ -90,7 +90,7 @@ export const BarcodeGeneratorModal: React.FC<BarcodeGeneratorModalProps> = ({
         <div className="flex items-center space-x-3">
           <button
             onClick={handleCopyBarcode}
-            className="flex-1 flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 active:scale-95 text-xs font-medium transition-all"
+            className="flex-1 flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl border border-neutral-200 bg-neutral-100 text-neutral-800 hover:bg-neutral-200 active:scale-95 text-xs font-semibold transition-all cursor-pointer shadow-xs"
           >
             {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
             <span>{copied ? 'Copied Barcode!' : 'Copy Code'}</span>
@@ -98,7 +98,7 @@ export const BarcodeGeneratorModal: React.FC<BarcodeGeneratorModalProps> = ({
 
           <button
             onClick={handlePrintBarcode}
-            className="flex-1 flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl bg-[#0071e3] hover:bg-[#0077ed] text-white active:scale-95 text-xs font-medium shadow-apple-subtle transition-all"
+            className="flex-1 flex items-center justify-center space-x-2 py-2.5 px-4 rounded-xl bg-black hover:bg-neutral-800 text-white active:scale-95 text-xs font-bold shadow-xs transition-all cursor-pointer"
           >
             <Printer className="w-4 h-4" />
             <span>Print Label</span>

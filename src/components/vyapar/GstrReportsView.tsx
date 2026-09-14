@@ -23,7 +23,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { Invoice, BusinessSettings, Product, Customer, Expense } from '../../types';
-import { formatINR, formatDate } from '../../utils/formatters';
+import { formatINR, formatDate, getLocalDateISO } from '../../utils/formatters';
 
 interface GstrReportsViewProps {
   invoices: Invoice[];
@@ -45,10 +45,10 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
   onSelectInvoice,
 }) => {
   const [saleTab, setSaleTab] = useState<'SALE' | 'SALE_RETURN'>('SALE');
-  const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const todayStr = useMemo(() => getLocalDateISO(), []);
   const startOfMonthStr = useMemo(() => {
     const d = new Date();
-    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+    return getLocalDateISO(new Date(d.getFullYear(), d.getMonth(), 1));
   }, []);
 
   const [fromDate, setFromDate] = useState(startOfMonthStr);
@@ -483,7 +483,7 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
     link.setAttribute('href', encodedUri);
     link.setAttribute(
       'download',
-      `${activeReportType.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`
+      `${activeReportType.replace(/\s+/g, '_')}_${getLocalDateISO()}.csv`
     );
     document.body.appendChild(link);
     link.click();
@@ -491,24 +491,24 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16 font-sans text-xs text-black">
-      {/* Top Filter Bar (Apple Black & White) */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-black/[0.06]">
-        <div className="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-xl border border-black/[0.08] shadow-2xs">
-          <span className="text-[#86868b] font-medium text-[11px]">From</span>
+    <div className="space-y-6 max-w-7xl mx-auto pb-16 font-sans text-xs text-neutral-900">
+      {/* Top Filter Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-neutral-200">
+        <div className="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-xl border border-neutral-200 shadow-2xs">
+          <span className="text-neutral-500 font-medium text-[11px]">From</span>
           <input
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="text-xs font-medium text-black focus:outline-none bg-transparent"
+            className="text-xs font-medium text-neutral-900 focus:outline-none bg-transparent"
           />
-          <span className="text-black/15 px-1">|</span>
-          <span className="text-[#86868b] font-medium text-[11px]">To</span>
+          <span className="text-neutral-300 px-1">|</span>
+          <span className="text-neutral-500 font-medium text-[11px]">To</span>
           <input
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="text-xs font-medium text-black focus:outline-none bg-transparent"
+            className="text-xs font-medium text-neutral-900 focus:outline-none bg-transparent"
           />
         </div>
 
@@ -517,14 +517,14 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
           <button
             onClick={handleExportExcel}
             title="Export to Excel / CSV"
-            className="w-8 h-8 rounded-full border border-black/15 bg-white text-black hover:bg-black hover:text-white flex items-center justify-center transition-all active:scale-95 shadow-2xs cursor-pointer"
+            className="w-8 h-8 rounded-full border border-neutral-200 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 hover:text-black flex items-center justify-center transition-all active:scale-95 shadow-2xs cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => window.print()}
             title="Print Report"
-            className="w-8 h-8 rounded-full border border-black/15 bg-white text-black hover:bg-black hover:text-white flex items-center justify-center transition-all active:scale-95 shadow-2xs cursor-pointer"
+            className="w-8 h-8 rounded-full border border-neutral-200 bg-neutral-100 text-neutral-700 hover:bg-neutral-200 hover:text-black flex items-center justify-center transition-all active:scale-95 shadow-2xs cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5" />
           </button>
@@ -537,49 +537,49 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
       {(activeReportType === 'Sale Summary By HSN' || activeReportType === 'SAC Report') && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold tracking-tight text-black uppercase">
+            <h2 className="text-base font-semibold tracking-tight text-neutral-900 uppercase">
               HSN / SAC Wise Sale Summary Report
             </h2>
-            <span className="text-[11px] text-[#86868b]">
-              GSTIN: <span className="font-mono font-medium text-black">{settings.gstin}</span>
+            <span className="text-[11px] text-neutral-500">
+              GSTIN: <span className="font-mono font-medium text-neutral-900">{settings.gstin}</span>
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl border border-black/[0.08] shadow-xs overflow-hidden">
+          <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-[#fafafa] text-[#86868b] font-semibold border-b border-black/[0.06] text-[10px] tracking-wider uppercase">
-                    <th className="py-2.5 px-4 border-r border-black/[0.04]">HSN/SAC</th>
-                    <th className="py-2.5 px-4 border-r border-black/[0.04]">Description</th>
-                    <th className="py-2.5 px-3 text-center border-r border-black/[0.04]">Unit</th>
-                    <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">Total Qty</th>
-                    <th className="py-2.5 px-4 text-right border-r border-black/[0.04]">Taxable Value (₹)</th>
-                    <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">IGST (₹)</th>
-                    <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">CGST (₹)</th>
-                    <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">SGST (₹)</th>
+                  <tr className="bg-neutral-50 text-neutral-600 font-semibold border-b border-neutral-200/80 text-[10px] tracking-wider uppercase">
+                    <th className="py-2.5 px-4 border-r border-neutral-200/60">HSN/SAC</th>
+                    <th className="py-2.5 px-4 border-r border-neutral-200/60">Description</th>
+                    <th className="py-2.5 px-3 text-center border-r border-neutral-200/60">Unit</th>
+                    <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">Total Qty</th>
+                    <th className="py-2.5 px-4 text-right border-r border-neutral-200/60">Taxable Value (₹)</th>
+                    <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">IGST (₹)</th>
+                    <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">CGST (₹)</th>
+                    <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">SGST (₹)</th>
                     <th className="py-2.5 px-4 text-right">Total Value (₹)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-black/[0.04] font-mono text-[11px]">
+                <tbody className="divide-y divide-neutral-100 font-mono text-[11px]">
                   {hsnSummary.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="py-8 text-center text-[#86868b] font-sans">
+                      <td colSpan={9} className="py-8 text-center text-neutral-500 font-sans">
                         No HSN summary data found for the selected period.
                       </td>
                     </tr>
                   ) : (
                     hsnSummary.map((h, i) => (
-                      <tr key={i} className="hover:bg-black/[0.02]">
-                        <td className="py-2 px-4 border-r border-black/[0.04] font-semibold text-black">{h.hsn}</td>
-                        <td className="py-2 px-4 border-r border-black/[0.04] font-sans font-medium text-black truncate max-w-xs">{h.description}</td>
-                        <td className="py-2 px-3 text-center border-r border-black/[0.04] text-[#86868b] font-sans">{h.unit}</td>
-                        <td className="py-2 px-3 text-right border-r border-black/[0.04] font-semibold text-black">{h.qty}</td>
-                        <td className="py-2 px-4 text-right border-r border-black/[0.04] text-black">{formatINR(h.taxable)}</td>
-                        <td className="py-2 px-3 text-right border-r border-black/[0.04] text-[#86868b]">{formatINR(h.igst)}</td>
-                        <td className="py-2 px-3 text-right border-r border-black/[0.04] text-[#86868b]">{formatINR(h.cgst)}</td>
-                        <td className="py-2 px-3 text-right border-r border-black/[0.04] text-[#86868b]">{formatINR(h.sgst)}</td>
-                        <td className="py-2 px-4 text-right font-semibold text-black">{formatINR(h.total)}</td>
+                      <tr key={i} className="hover:bg-neutral-50/70">
+                        <td className="py-2 px-4 border-r border-neutral-200/60 font-semibold text-neutral-900">{h.hsn}</td>
+                        <td className="py-2 px-4 border-r border-neutral-200/60 font-sans font-medium text-neutral-800 truncate max-w-xs">{h.description}</td>
+                        <td className="py-2 px-3 text-center border-r border-neutral-200/60 text-neutral-500 font-sans">{h.unit}</td>
+                        <td className="py-2 px-3 text-right border-r border-neutral-200/60 font-semibold text-neutral-900">{h.qty}</td>
+                        <td className="py-2 px-4 text-right border-r border-neutral-200/60 text-neutral-900">{formatINR(h.taxable)}</td>
+                        <td className="py-2 px-3 text-right border-r border-neutral-200/60 text-neutral-500">{formatINR(h.igst)}</td>
+                        <td className="py-2 px-3 text-right border-r border-neutral-200/60 text-neutral-500">{formatINR(h.cgst)}</td>
+                        <td className="py-2 px-3 text-right border-r border-neutral-200/60 text-neutral-500">{formatINR(h.sgst)}</td>
+                        <td className="py-2 px-4 text-right font-semibold text-neutral-900">{formatINR(h.total)}</td>
                       </tr>
                     ))
                   )}
@@ -596,44 +596,44 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
       {(activeReportType === 'Stock summary' || activeReportType === 'Low Stock Summary') && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold tracking-tight text-black uppercase">
+            <h2 className="text-base font-semibold tracking-tight text-neutral-900 uppercase">
               {activeReportType === 'Low Stock Summary' ? 'Low Stock Reorder Report' : 'Stock Summary Report'}
             </h2>
-            <span className="text-[11px] text-[#86868b]">
-              Total Products: <span className="font-semibold text-black">{products.length}</span>
+            <span className="text-[11px] text-neutral-500">
+              Total Products: <span className="font-semibold text-neutral-900">{products.length}</span>
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl border border-black/[0.08] shadow-xs overflow-hidden">
+          <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="bg-[#fafafa] text-[#86868b] font-semibold border-b border-black/[0.06] text-[10px] tracking-wider uppercase">
-                    <th className="py-2.5 px-4 border-r border-black/[0.04]">Item Name</th>
-                    <th className="py-2.5 px-3 border-r border-black/[0.04]">HSN</th>
-                    <th className="py-2.5 px-3 border-r border-black/[0.04]">Category</th>
-                    <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">Purchase Price</th>
-                    <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">Sale Price</th>
-                    <th className="py-2.5 px-3 text-center border-r border-black/[0.04]">Current Stock</th>
+                  <tr className="bg-neutral-50 text-neutral-600 font-semibold border-b border-neutral-200/80 text-[10px] tracking-wider uppercase">
+                    <th className="py-2.5 px-4 border-r border-neutral-200/60">Item Name</th>
+                    <th className="py-2.5 px-3 border-r border-neutral-200/60">HSN</th>
+                    <th className="py-2.5 px-3 border-r border-neutral-200/60">Category</th>
+                    <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">Purchase Price</th>
+                    <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">Sale Price</th>
+                    <th className="py-2.5 px-3 text-center border-r border-neutral-200/60">Current Stock</th>
                     <th className="py-2.5 px-4 text-right">Stock Valuation (₹)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-black/[0.04] font-mono text-[11px]">
+                <tbody className="divide-y divide-neutral-100 font-mono text-[11px]">
                   {products
                     .filter((p) => (activeReportType === 'Low Stock Summary' ? p.stock <= p.minStockAlert : true))
                     .map((p) => (
-                      <tr key={p.id} className="hover:bg-black/[0.02]">
-                        <td className="py-2 px-4 border-r border-black/[0.04] font-sans font-medium text-black">{p.name}</td>
-                        <td className="py-2 px-3 border-r border-black/[0.04] text-[#86868b]">{p.hsn}</td>
-                        <td className="py-2 px-3 border-r border-black/[0.04] font-sans text-[#86868b]">{p.category}</td>
-                        <td className="py-2 px-3 text-right border-r border-black/[0.04] text-[#86868b]">{formatINR(p.purchasePrice)}</td>
-                        <td className="py-2 px-3 text-right border-r border-black/[0.04] font-semibold text-black">{formatINR(p.salePrice)}</td>
-                        <td className="py-2 px-3 text-center border-r border-black/[0.04] font-sans">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${p.stock <= p.minStockAlert ? 'bg-red-100 text-red-700' : 'bg-neutral-100 text-neutral-700'}`}>
+                      <tr key={p.id} className="hover:bg-neutral-50/70">
+                        <td className="py-2 px-4 border-r border-neutral-200/60 font-sans font-medium text-neutral-900">{p.name}</td>
+                        <td className="py-2 px-3 border-r border-neutral-200/60 text-neutral-500">{p.hsn}</td>
+                        <td className="py-2 px-3 border-r border-neutral-200/60 font-sans text-neutral-500">{p.category}</td>
+                        <td className="py-2 px-3 text-right border-r border-neutral-200/60 text-neutral-600">{formatINR(p.purchasePrice)}</td>
+                        <td className="py-2 px-3 text-right border-r border-neutral-200/60 font-semibold text-neutral-900">{formatINR(p.salePrice)}</td>
+                        <td className="py-2 px-3 text-center border-r border-neutral-200/60 font-sans">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${p.stock <= p.minStockAlert ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-neutral-100 text-neutral-700 border border-neutral-200'}`}>
                             {p.stock} {p.unit}
                           </span>
                         </td>
-                        <td className="py-2 px-4 text-right font-semibold text-black">{formatINR(p.purchasePrice * p.stock)}</td>
+                        <td className="py-2 px-4 text-right font-semibold text-neutral-900">{formatINR(p.purchasePrice * p.stock)}</td>
                       </tr>
                     ))}
                 </tbody>
@@ -650,38 +650,38 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-semibold tracking-tight text-black uppercase">
+              <h2 className="text-base font-semibold tracking-tight text-neutral-900 uppercase">
                 GSTR-2 Inward Supplies (Input Tax Credit / Purchases)
               </h2>
-              <p className="text-[11px] text-[#86868b]">
+              <p className="text-[11px] text-neutral-500">
                 Summary of operational expenses and vendor purchases eligible for GST ITC claim
               </p>
             </div>
-            <div className="p-3 bg-white rounded-2xl border border-neutral-200 text-right">
-              <span className="text-[10px] text-neutral-400 uppercase font-bold block">Total Inward ITC</span>
+            <div className="p-3 bg-white rounded-2xl border border-neutral-200/80 shadow-xs text-right">
+              <span className="text-[10px] text-neutral-500 uppercase font-bold block">Total Inward ITC</span>
               <span className="text-base font-bold font-mono text-emerald-700">
                 {formatINR(estimatedInwardCgst + estimatedInwardSgst)}
               </span>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-black/[0.08] shadow-xs overflow-hidden">
+          <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[#fafafa] text-[#86868b] font-semibold border-b border-black/[0.06] text-[10px] tracking-wider uppercase">
-                  <th className="py-2.5 px-4 border-r border-black/[0.04]">Date</th>
-                  <th className="py-2.5 px-4 border-r border-black/[0.04]">Supplier / Payee</th>
-                  <th className="py-2.5 px-3 border-r border-black/[0.04]">Category</th>
-                  <th className="py-2.5 px-3 border-r border-black/[0.04]">Voucher Ref</th>
-                  <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">Taxable Amount</th>
-                  <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">Eligible ITC (CGST+SGST)</th>
+                <tr className="bg-neutral-50 text-neutral-600 font-semibold border-b border-neutral-200/80 text-[10px] tracking-wider uppercase">
+                  <th className="py-2.5 px-4 border-r border-neutral-200/60">Date</th>
+                  <th className="py-2.5 px-4 border-r border-neutral-200/60">Supplier / Payee</th>
+                  <th className="py-2.5 px-3 border-r border-neutral-200/60">Category</th>
+                  <th className="py-2.5 px-3 border-r border-neutral-200/60">Voucher Ref</th>
+                  <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">Taxable Amount</th>
+                  <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">Eligible ITC (CGST+SGST)</th>
                   <th className="py-2.5 px-4 text-right">Invoice Gross (₹)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/[0.04] font-mono text-[11px]">
+              <tbody className="divide-y divide-neutral-100 font-mono text-[11px]">
                 {filteredExpenses.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-[#86868b] font-sans">
+                    <td colSpan={7} className="py-8 text-center text-neutral-500 font-sans">
                       No inward purchase or expense vouchers recorded in this period.
                     </td>
                   </tr>
@@ -690,14 +690,14 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
                     const taxable = exp.amount / 1.18;
                     const itc = exp.amount - taxable;
                     return (
-                      <tr key={exp.id} className="hover:bg-black/[0.02]">
-                        <td className="py-2 px-4 border-r border-black/[0.04] text-[#86868b]">{formatDate(exp.date)}</td>
-                        <td className="py-2 px-4 border-r border-black/[0.04] font-sans font-semibold text-black">{exp.paidTo || 'Vendor / Counter'}</td>
-                        <td className="py-2 px-3 border-r border-black/[0.04] font-sans text-neutral-600">{exp.category}</td>
-                        <td className="py-2 px-3 border-r border-black/[0.04] text-[#86868b]">{exp.receiptNo || '—'}</td>
-                        <td className="py-2 px-3 text-right border-r border-black/[0.04] text-neutral-800">{formatINR(taxable)}</td>
-                        <td className="py-2 px-3 text-right border-r border-black/[0.04] text-emerald-700 font-bold">+{formatINR(itc)}</td>
-                        <td className="py-2 px-4 text-right font-bold text-black">{formatINR(exp.amount)}</td>
+                      <tr key={exp.id} className="hover:bg-neutral-50/70">
+                        <td className="py-2 px-4 border-r border-neutral-200/60 text-neutral-500">{formatDate(exp.date)}</td>
+                        <td className="py-2 px-4 border-r border-neutral-200/60 font-sans font-semibold text-neutral-900">{exp.paidTo || 'Vendor / Counter'}</td>
+                        <td className="py-2 px-3 border-r border-neutral-200/60 font-sans text-neutral-600">{exp.category}</td>
+                        <td className="py-2 px-3 border-r border-neutral-200/60 text-neutral-500">{exp.receiptNo || '—'}</td>
+                        <td className="py-2 px-3 text-right border-r border-neutral-200/60 text-neutral-800">{formatINR(taxable)}</td>
+                        <td className="py-2 px-3 text-right border-r border-neutral-200/60 text-emerald-700 font-bold">+{formatINR(itc)}</td>
+                        <td className="py-2 px-4 text-right font-bold text-neutral-900">{formatINR(exp.amount)}</td>
                       </tr>
                     );
                   })
@@ -714,32 +714,32 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
       {activeReportType === 'GSTR 3 B' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold tracking-tight text-black uppercase">
+            <h2 className="text-base font-semibold tracking-tight text-neutral-900 uppercase">
               GSTR-3B Monthly Consolidated Tax Return
             </h2>
-            <span className="text-[11px] text-[#86868b]">
-              Rule 61(5) CGST Rules • GSTIN: <span className="font-mono font-medium text-black">{settings.gstin}</span>
+            <span className="text-[11px] text-neutral-500">
+              Rule 61(5) CGST Rules • GSTIN: <span className="font-mono font-medium text-neutral-900">{settings.gstin}</span>
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-5 bg-white rounded-3xl border border-neutral-200 shadow-2xs space-y-2">
-              <span className="text-[10px] uppercase font-bold text-neutral-400">Total Output Tax Liability</span>
+            <div className="p-5 bg-white rounded-3xl border border-neutral-200/80 shadow-2xs space-y-2">
+              <span className="text-[10px] uppercase font-bold text-neutral-500">Total Output Tax Liability</span>
               <div className="text-xl font-bold font-mono text-neutral-900">
                 {formatINR(totalCgst + totalSgst + totalIgst)}
               </div>
               <p className="text-[11px] text-neutral-500">Collected on {filteredInvoices.length} sales bills</p>
             </div>
 
-            <div className="p-5 bg-white rounded-3xl border border-neutral-200 shadow-2xs space-y-2">
-              <span className="text-[10px] uppercase font-bold text-neutral-400">Eligible Input Tax Credit (ITC)</span>
+            <div className="p-5 bg-white rounded-3xl border border-neutral-200/80 shadow-2xs space-y-2">
+              <span className="text-[10px] uppercase font-bold text-neutral-500">Eligible Input Tax Credit (ITC)</span>
               <div className="text-xl font-bold font-mono text-emerald-700">
                 {formatINR(estimatedInwardCgst + estimatedInwardSgst)}
               </div>
               <p className="text-[11px] text-neutral-500">Claimable from expenses & purchases</p>
             </div>
 
-            <div className="p-5 bg-neutral-900 text-white rounded-3xl shadow-2xs space-y-2">
+            <div className="p-5 bg-black text-white rounded-3xl shadow-xs space-y-2">
               <span className="text-[10px] uppercase font-bold text-neutral-400">Net Tax Payable in Cash</span>
               <div className="text-xl font-bold font-mono text-white">
                 {formatINR(Math.max(0, (totalCgst + totalSgst + totalIgst) - (estimatedInwardCgst + estimatedInwardSgst)))}
@@ -807,34 +807,34 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl border border-black/[0.08] shadow-xs overflow-hidden">
+          <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[#fafafa] text-[#86868b] font-semibold border-b border-black/[0.06] text-[10px] tracking-wider uppercase">
-                  <th className="py-2.5 px-4 border-r border-black/[0.04]">Party Name</th>
-                  <th className="py-2.5 px-4 border-r border-black/[0.04]">GSTIN / Phone</th>
-                  <th className="py-2.5 px-4 border-r border-black/[0.04]">Purchased Item</th>
-                  <th className="py-2.5 px-3 text-center border-r border-black/[0.04]">Quantity</th>
-                  <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">Total Amount (₹)</th>
+                <tr className="bg-neutral-50/80 text-neutral-600 font-semibold border-b border-neutral-200/80 text-[10px] tracking-wider uppercase">
+                  <th className="py-2.5 px-4 border-r border-neutral-200/60">Party Name</th>
+                  <th className="py-2.5 px-4 border-r border-neutral-200/60">GSTIN / Phone</th>
+                  <th className="py-2.5 px-4 border-r border-neutral-200/60">Purchased Item</th>
+                  <th className="py-2.5 px-3 text-center border-r border-neutral-200/60">Quantity</th>
+                  <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">Total Amount (₹)</th>
                   <th className="py-2.5 px-3 text-right">Bill Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/[0.04] font-mono text-[11px]">
+              <tbody className="divide-y divide-neutral-100 font-mono text-[11px]">
                 {partyItemReport.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-[#86868b] font-sans">
+                    <td colSpan={6} className="py-8 text-center text-neutral-500 font-sans">
                       No party item sales recorded in this period.
                     </td>
                   </tr>
                 ) : (
                   partyItemReport.map((p, idx) => (
-                    <tr key={idx} className="hover:bg-black/[0.02]">
-                      <td className="py-2 px-4 border-r border-black/[0.04] font-sans font-bold text-black">{p.partyName}</td>
-                      <td className="py-2 px-4 border-r border-black/[0.04] text-[#86868b]">{p.gstin || p.phone}</td>
-                      <td className="py-2 px-4 border-r border-black/[0.04] font-sans font-medium text-black">{p.itemName}</td>
-                      <td className="py-2 px-3 text-center border-r border-black/[0.04] text-black">{p.qty} {p.unit}</td>
-                      <td className="py-2 px-3 text-right border-r border-black/[0.04] font-bold text-black">{formatINR(p.totalAmount)}</td>
-                      <td className="py-2 px-3 text-right text-[#86868b]">{formatDate(p.lastDate)}</td>
+                    <tr key={idx} className="hover:bg-neutral-50/70 transition-colors">
+                      <td className="py-2 px-4 border-r border-neutral-100 font-sans font-bold text-neutral-900">{p.partyName}</td>
+                      <td className="py-2 px-4 border-r border-neutral-100 text-neutral-500">{p.gstin || p.phone}</td>
+                      <td className="py-2 px-4 border-r border-neutral-100 font-sans font-medium text-neutral-900">{p.itemName}</td>
+                      <td className="py-2 px-3 text-center border-r border-neutral-100 text-neutral-800">{p.qty} {p.unit}</td>
+                      <td className="py-2 px-3 text-right border-r border-neutral-100 font-bold text-neutral-900">{formatINR(p.totalAmount)}</td>
+                      <td className="py-2 px-3 text-right text-neutral-500">{formatDate(p.lastDate)}</td>
                     </tr>
                   ))
                 )}
@@ -852,12 +852,12 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
           {/* Header & Meta */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h2 className="text-base font-semibold tracking-tight text-black uppercase flex items-center gap-2">
+              <h2 className="text-base font-semibold tracking-tight text-neutral-900 uppercase flex items-center gap-2">
                 {profitTab === 'CLIENT' && 'Client / Party Wise Profit & Loss Report'}
                 {profitTab === 'ITEM' && 'Item / Product Wise Profit & Loss Report'}
                 {profitTab === 'BILL' && 'Bill / Invoice Wise Profit & Loss Report'}
               </h2>
-              <p className="text-[11px] text-[#86868b] mt-0.5">
+              <p className="text-[11px] text-neutral-500 mt-0.5">
                 Real-time Gross Profit Margin & Profitability Analytics across Transactions
               </p>
             </div>
@@ -865,7 +865,7 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
               <span className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                 Gross Margin: {overallProfitMargin.toFixed(1)}%
               </span>
-              <span className="px-2.5 py-1 rounded-full text-[11px] font-mono font-medium bg-black/5 text-black">
+              <span className="px-2.5 py-1 rounded-full text-[11px] font-mono font-medium bg-neutral-100 text-neutral-800 border border-neutral-200">
                 Total Profit: +{formatINR(totalInvoicedProfit)}
               </span>
             </div>
@@ -873,34 +873,34 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
 
           {/* Top 4 KPI Metrics */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="p-3.5 bg-white rounded-2xl border border-black/[0.06] shadow-2xs">
-              <div className="flex items-center justify-between text-[#86868b] mb-1">
+            <div className="p-4 bg-white rounded-2xl border border-neutral-200/80 shadow-xs">
+              <div className="flex items-center justify-between text-neutral-500 mb-1">
                 <span className="text-[10px] font-semibold uppercase tracking-wider">Total Gross Profit</span>
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
               </div>
-              <div className="text-lg font-bold font-mono text-emerald-700">
+              <div className="text-lg font-bold font-mono text-emerald-600">
                 +{formatINR(totalInvoicedProfit)}
               </div>
-              <span className="text-[10px] text-[#86868b]">From {filteredInvoices.length} invoices</span>
+              <span className="text-[10px] text-neutral-400">From {filteredInvoices.length} invoices</span>
             </div>
 
-            <div className="p-3.5 bg-white rounded-2xl border border-black/[0.06] shadow-2xs">
-              <div className="flex items-center justify-between text-[#86868b] mb-1">
+            <div className="p-4 bg-white rounded-2xl border border-neutral-200/80 shadow-xs">
+              <div className="flex items-center justify-between text-neutral-500 mb-1">
                 <span className="text-[10px] font-semibold uppercase tracking-wider">Overall Margin</span>
                 <Percent className="w-3.5 h-3.5 text-blue-600" />
               </div>
-              <div className="text-lg font-bold font-mono text-blue-700">
+              <div className="text-lg font-bold font-mono text-blue-600">
                 {overallProfitMargin.toFixed(1)}%
               </div>
-              <span className="text-[10px] text-[#86868b]">On {formatINR(totalInvoicedRevenue)} sales</span>
+              <span className="text-[10px] text-neutral-400">On {formatINR(totalInvoicedRevenue)} sales</span>
             </div>
 
-            <div className="p-3.5 bg-white rounded-2xl border border-black/[0.06] shadow-2xs">
-              <div className="flex items-center justify-between text-[#86868b] mb-1">
+            <div className="p-4 bg-white rounded-2xl border border-neutral-200/80 shadow-xs">
+              <div className="flex items-center justify-between text-neutral-500 mb-1">
                 <span className="text-[10px] font-semibold uppercase tracking-wider">Top Client</span>
                 <Users className="w-3.5 h-3.5 text-purple-600" />
               </div>
-              <div className="text-sm font-bold text-black truncate" title={topProfitableClient?.name || 'N/A'}>
+              <div className="text-sm font-bold text-neutral-900 truncate" title={topProfitableClient?.name || 'N/A'}>
                 {topProfitableClient ? topProfitableClient.name : 'No sales recorded'}
               </div>
               <span className="text-[10px] text-emerald-600 font-mono font-medium">
@@ -908,12 +908,12 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
               </span>
             </div>
 
-            <div className="p-3.5 bg-white rounded-2xl border border-black/[0.06] shadow-2xs">
-              <div className="flex items-center justify-between text-[#86868b] mb-1">
+            <div className="p-4 bg-white rounded-2xl border border-neutral-200/80 shadow-xs">
+              <div className="flex items-center justify-between text-neutral-500 mb-1">
                 <span className="text-[10px] font-semibold uppercase tracking-wider">Top Item</span>
                 <Package className="w-3.5 h-3.5 text-amber-600" />
               </div>
-              <div className="text-sm font-bold text-black truncate" title={topProfitableProduct?.name || 'N/A'}>
+              <div className="text-sm font-bold text-neutral-900 truncate" title={topProfitableProduct?.name || 'N/A'}>
                 {topProfitableProduct ? topProfitableProduct.name : 'No sales recorded'}
               </div>
               <span className="text-[10px] text-emerald-600 font-mono font-medium">
@@ -923,15 +923,15 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
           </div>
 
           {/* SubTab Pill Switcher + Search + Sort Filter Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-2 bg-[#f4f4f6] rounded-2xl border border-black/[0.06]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-2.5 bg-white rounded-2xl border border-neutral-200/80 shadow-xs">
             {/* Pill Switcher */}
-            <div className="flex items-center gap-1 bg-black/[0.04] p-1 rounded-xl">
+            <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-xl border border-neutral-200/60">
               <button
                 onClick={() => { setProfitTab('CLIENT'); setExpandedProfitRowId(null); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   profitTab === 'CLIENT'
-                    ? 'bg-white text-black shadow-xs'
-                    : 'text-[#86868b] hover:text-black'
+                    ? 'bg-white text-neutral-900 shadow-xs'
+                    : 'text-neutral-500 hover:text-neutral-900'
                 }`}
               >
                 <Users className="w-3.5 h-3.5" />
@@ -941,8 +941,8 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
                 onClick={() => { setProfitTab('ITEM'); setExpandedProfitRowId(null); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   profitTab === 'ITEM'
-                    ? 'bg-white text-black shadow-xs'
-                    : 'text-[#86868b] hover:text-black'
+                    ? 'bg-white text-neutral-900 shadow-xs'
+                    : 'text-neutral-500 hover:text-neutral-900'
                 }`}
               >
                 <Package className="w-3.5 h-3.5" />
@@ -952,8 +952,8 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
                 onClick={() => { setProfitTab('BILL'); setExpandedProfitRowId(null); }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   profitTab === 'BILL'
-                    ? 'bg-white text-black shadow-xs'
-                    : 'text-[#86868b] hover:text-black'
+                    ? 'bg-white text-neutral-900 shadow-xs'
+                    : 'text-neutral-500 hover:text-neutral-900'
                 }`}
               >
                 <Receipt className="w-3.5 h-3.5" />
@@ -964,7 +964,7 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
             {/* Search & Sort Controls */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1 sm:w-64">
-                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#86868b]" />
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
                   type="text"
                   placeholder={
@@ -976,7 +976,7 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
                   }
                   value={profitSearch}
                   onChange={(e) => setProfitSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 bg-white rounded-xl border border-black/[0.08] text-xs font-medium text-black focus:outline-none focus:ring-1 focus:ring-black placeholder:text-[#86868b]"
+                  className="w-full pl-8 pr-3 py-1.5 bg-neutral-50 rounded-xl border border-neutral-200 text-xs font-medium text-neutral-900 focus:outline-none focus:border-black placeholder:text-neutral-400"
                 />
               </div>
 
@@ -984,36 +984,36 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
                 <select
                   value={profitSort}
                   onChange={(e) => setProfitSort(e.target.value as any)}
-                  className="px-3 py-1.5 bg-white rounded-xl border border-black/[0.08] text-xs font-medium text-black focus:outline-none focus:ring-1 focus:ring-black appearance-none pr-7 cursor-pointer"
+                  className="px-3 py-1.5 bg-neutral-50 rounded-xl border border-neutral-200 text-xs font-medium text-neutral-900 focus:outline-none focus:border-black appearance-none pr-7 cursor-pointer"
                 >
                   <option value="PROFIT_DESC">Highest Profit</option>
                   <option value="PROFIT_ASC">Lowest Profit</option>
                   <option value="MARGIN_DESC">Highest Margin %</option>
                   <option value="SALES_DESC">Highest Revenue</option>
                 </select>
-                <ChevronDown className="w-3 h-3 text-[#86868b] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-3 h-3 text-neutral-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
             </div>
           </div>
 
           {/* Tab 1: CLIENT WISE PROFIT TABLE */}
           {profitTab === 'CLIENT' && (
-            <div className="bg-white rounded-2xl border border-black/[0.08] shadow-xs overflow-hidden">
+            <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="bg-[#fafafa] text-[#86868b] font-semibold border-b border-black/[0.06] text-[10px] tracking-wider uppercase">
-                      <th className="py-2.5 px-4 border-r border-black/[0.04]">Party / Client Name</th>
-                      <th className="py-2.5 px-3 border-r border-black/[0.04]">GSTIN / Phone</th>
-                      <th className="py-2.5 px-3 text-center border-r border-black/[0.04]">Bills</th>
-                      <th className="py-2.5 px-4 text-right border-r border-black/[0.04]">Total Revenue</th>
-                      <th className="py-2.5 px-4 text-right border-r border-black/[0.04]">Cost of Goods (COGS)</th>
-                      <th className="py-2.5 px-4 text-right border-r border-black/[0.04]">Gross Profit (₹)</th>
-                      <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">Margin (%)</th>
+                    <tr className="bg-neutral-50/80 text-neutral-600 font-semibold border-b border-neutral-200/80 text-[10px] tracking-wider uppercase">
+                      <th className="py-2.5 px-4 border-r border-neutral-200/60">Party / Client Name</th>
+                      <th className="py-2.5 px-3 border-r border-neutral-200/60">GSTIN / Phone</th>
+                      <th className="py-2.5 px-3 text-center border-r border-neutral-200/60">Bills</th>
+                      <th className="py-2.5 px-4 text-right border-r border-neutral-200/60">Total Revenue</th>
+                      <th className="py-2.5 px-4 text-right border-r border-neutral-200/60">Cost of Goods (COGS)</th>
+                      <th className="py-2.5 px-4 text-right border-r border-neutral-200/60">Gross Profit (₹)</th>
+                      <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">Margin (%)</th>
                       <th className="py-2.5 px-3 text-center">Invoices</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-black/[0.04] font-mono text-[11px]">
+                  <tbody className="divide-y divide-neutral-100 font-mono text-[11px]">
                     {filteredSortedClientProfit.length === 0 ? (
                       <tr>
                         <td colSpan={8} className="py-8 text-center text-[#86868b] font-sans">
@@ -1140,26 +1140,26 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
 
           {/* Tab 2: ITEM WISE PROFIT TABLE */}
           {profitTab === 'ITEM' && (
-            <div className="bg-white rounded-2xl border border-black/[0.08] shadow-xs overflow-hidden">
+            <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="bg-[#fafafa] text-[#86868b] font-semibold border-b border-black/[0.06] text-[10px] tracking-wider uppercase">
-                      <th className="py-2.5 px-4 border-r border-black/[0.04]">Product Name</th>
-                      <th className="py-2.5 px-3 border-r border-black/[0.04]">HSN</th>
-                      <th className="py-2.5 px-3 text-center border-r border-black/[0.04]">Units Sold</th>
-                      <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">Avg Sale Rate</th>
-                      <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">Avg Cost Rate</th>
-                      <th className="py-2.5 px-4 text-right border-r border-black/[0.04]">Sales Revenue</th>
-                      <th className="py-2.5 px-4 text-right border-r border-black/[0.04]">Cost of Goods</th>
-                      <th className="py-2.5 px-4 text-right border-r border-black/[0.04]">Gross Profit (₹)</th>
+                    <tr className="bg-neutral-50/80 text-neutral-600 font-semibold border-b border-neutral-200/80 text-[10px] tracking-wider uppercase">
+                      <th className="py-2.5 px-4 border-r border-neutral-200/60">Product Name</th>
+                      <th className="py-2.5 px-3 border-r border-neutral-200/60">HSN</th>
+                      <th className="py-2.5 px-3 text-center border-r border-neutral-200/60">Units Sold</th>
+                      <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">Avg Sale Rate</th>
+                      <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">Avg Cost Rate</th>
+                      <th className="py-2.5 px-4 text-right border-r border-neutral-200/60">Sales Revenue</th>
+                      <th className="py-2.5 px-4 text-right border-r border-neutral-200/60">Cost of Goods</th>
+                      <th className="py-2.5 px-4 text-right border-r border-neutral-200/60">Gross Profit (₹)</th>
                       <th className="py-2.5 px-3 text-right">Margin (%)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-black/[0.04] font-mono text-[11px]">
+                  <tbody className="divide-y divide-neutral-100 font-mono text-[11px]">
                     {filteredSortedItemProfit.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="py-8 text-center text-[#86868b] font-sans">
+                        <td colSpan={9} className="py-8 text-center text-neutral-500 font-sans">
                           No sales data available to calculate item profit margins.
                         </td>
                       </tr>
@@ -1167,15 +1167,15 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
                       filteredSortedItemProfit.map((it, idx) => {
                         const isProfitPositive = it.profit >= 0;
                         return (
-                          <tr key={idx} className="hover:bg-black/[0.015] transition-colors">
-                            <td className="py-2.5 px-4 border-r border-black/[0.04] font-sans font-bold text-black">{it.name}</td>
-                            <td className="py-2.5 px-3 border-r border-black/[0.04] text-[#86868b]">{it.hsn}</td>
-                            <td className="py-2.5 px-3 text-center border-r border-black/[0.04] text-black font-semibold">{it.qty}</td>
-                            <td className="py-2.5 px-3 text-right border-r border-black/[0.04] text-neutral-600">{formatINR(it.avgSalePrice)}</td>
-                            <td className="py-2.5 px-3 text-right border-r border-black/[0.04] text-neutral-500">{formatINR(it.avgCostPrice)}</td>
-                            <td className="py-2.5 px-4 text-right border-r border-black/[0.04] font-semibold text-black">{formatINR(it.revenue)}</td>
-                            <td className="py-2.5 px-4 text-right border-r border-black/[0.04] text-neutral-500">{formatINR(it.cost)}</td>
-                            <td className={`py-2.5 px-4 text-right border-r border-black/[0.04] font-bold ${
+                          <tr key={idx} className="hover:bg-neutral-50/70 transition-colors">
+                            <td className="py-2.5 px-4 border-r border-neutral-100 font-sans font-bold text-neutral-900">{it.name}</td>
+                            <td className="py-2.5 px-3 border-r border-neutral-100 text-neutral-500">{it.hsn}</td>
+                            <td className="py-2.5 px-3 text-center border-r border-neutral-100 text-neutral-900 font-semibold">{it.qty}</td>
+                            <td className="py-2.5 px-3 text-right border-r border-neutral-100 text-neutral-600">{formatINR(it.avgSalePrice)}</td>
+                            <td className="py-2.5 px-3 text-right border-r border-neutral-100 text-neutral-500">{formatINR(it.avgCostPrice)}</td>
+                            <td className="py-2.5 px-4 text-right border-r border-neutral-100 font-semibold text-neutral-900">{formatINR(it.revenue)}</td>
+                            <td className="py-2.5 px-4 text-right border-r border-neutral-100 text-neutral-500">{formatINR(it.cost)}</td>
+                            <td className={`py-2.5 px-4 text-right border-r border-neutral-100 font-bold ${
                               isProfitPositive ? 'text-emerald-700' : 'text-rose-600'
                             }`}>
                               {isProfitPositive ? '+' : ''}{formatINR(it.profit)}
@@ -1199,26 +1199,26 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
 
           {/* Tab 3: BILL WISE PROFIT TABLE */}
           {profitTab === 'BILL' && (
-            <div className="bg-white rounded-2xl border border-black/[0.08] shadow-xs overflow-hidden">
+            <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="bg-[#fafafa] text-[#86868b] font-semibold border-b border-black/[0.06] text-[10px] tracking-wider uppercase">
-                      <th className="py-2.5 px-4 border-r border-black/[0.04]">Invoice Number</th>
-                      <th className="py-2.5 px-3 border-r border-black/[0.04]">Date</th>
-                      <th className="py-2.5 px-4 border-r border-black/[0.04]">Party / Client</th>
-                      <th className="py-2.5 px-3 border-r border-black/[0.04]">Payment / Type</th>
-                      <th className="py-2.5 px-4 text-right border-r border-black/[0.04]">Grand Total (₹)</th>
-                      <th className="py-2.5 px-4 text-right border-r border-black/[0.04]">Bill Cost (₹)</th>
-                      <th className="py-2.5 px-4 text-right border-r border-black/[0.04]">Net Profit (₹)</th>
-                      <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">Margin (%)</th>
+                    <tr className="bg-neutral-50/80 text-neutral-600 font-semibold border-b border-neutral-200/80 text-[10px] tracking-wider uppercase">
+                      <th className="py-2.5 px-4 border-r border-neutral-200/60">Invoice Number</th>
+                      <th className="py-2.5 px-3 border-r border-neutral-200/60">Date</th>
+                      <th className="py-2.5 px-4 border-r border-neutral-200/60">Party / Client</th>
+                      <th className="py-2.5 px-3 border-r border-neutral-200/60">Payment / Type</th>
+                      <th className="py-2.5 px-4 text-right border-r border-neutral-200/60">Grand Total (₹)</th>
+                      <th className="py-2.5 px-4 text-right border-r border-neutral-200/60">Bill Cost (₹)</th>
+                      <th className="py-2.5 px-4 text-right border-r border-neutral-200/60">Net Profit (₹)</th>
+                      <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">Margin (%)</th>
                       <th className="py-2.5 px-3 text-center">Items</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-black/[0.04] font-mono text-[11px]">
+                  <tbody className="divide-y divide-neutral-100 font-mono text-[11px]">
                     {filteredSortedBillProfit.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="py-8 text-center text-[#86868b] font-sans">
+                        <td colSpan={9} className="py-8 text-center text-neutral-500 font-sans">
                           No bills recorded in this period.
                         </td>
                       </tr>
@@ -1228,8 +1228,8 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
                         const isProfitPositive = b.billProfit >= 0;
                         return (
                           <React.Fragment key={b.id}>
-                            <tr className="hover:bg-black/[0.015] transition-colors">
-                              <td className="py-2.5 px-4 border-r border-black/[0.04] font-bold">
+                            <tr className="hover:bg-neutral-50/70 transition-colors">
+                              <td className="py-2.5 px-4 border-r border-neutral-100 font-bold">
                                 <button
                                   onClick={() => onSelectInvoice(b.invoice)}
                                   className="text-blue-600 hover:underline flex items-center gap-1.5 cursor-pointer font-mono"
@@ -1239,30 +1239,30 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
                                   <span>{b.invoiceNumber}</span>
                                 </button>
                               </td>
-                              <td className="py-2.5 px-3 border-r border-black/[0.04] text-[#86868b]">
+                              <td className="py-2.5 px-3 border-r border-neutral-100 text-neutral-500">
                                 {formatDate(b.date)}
                               </td>
-                              <td className="py-2.5 px-4 border-r border-black/[0.04] font-sans font-semibold text-black">
+                              <td className="py-2.5 px-4 border-r border-neutral-100 font-sans font-semibold text-neutral-900">
                                 <div>{b.customerName}</div>
-                                <span className="text-[10px] text-[#86868b] font-normal">{b.customerPhone}</span>
+                                <span className="text-[10px] text-neutral-500 font-normal">{b.customerPhone}</span>
                               </td>
-                              <td className="py-2.5 px-3 border-r border-black/[0.04] font-sans text-neutral-600">
-                                <span className="px-1.5 py-0.5 rounded bg-black/5 text-[10px] font-medium">
+                              <td className="py-2.5 px-3 border-r border-neutral-100 font-sans text-neutral-600">
+                                <span className="px-1.5 py-0.5 rounded bg-neutral-100 text-[10px] font-medium border border-neutral-200">
                                   {b.saleType || 'B2B'}
                                 </span>
                               </td>
-                              <td className="py-2.5 px-4 text-right border-r border-black/[0.04] font-semibold text-black">
+                              <td className="py-2.5 px-4 text-right border-r border-neutral-100 font-semibold text-neutral-900">
                                 {formatINR(b.grandTotal)}
                               </td>
-                              <td className="py-2.5 px-4 text-right border-r border-black/[0.04] text-neutral-500">
+                              <td className="py-2.5 px-4 text-right border-r border-neutral-100 text-neutral-500">
                                 {formatINR(b.billCost)}
                               </td>
-                              <td className={`py-2.5 px-4 text-right border-r border-black/[0.04] font-bold ${
+                              <td className={`py-2.5 px-4 text-right border-r border-neutral-100 font-bold ${
                                 isProfitPositive ? 'text-emerald-700' : 'text-rose-600'
                               }`}>
                                 {isProfitPositive ? '+' : ''}{formatINR(b.billProfit)}
                               </td>
-                              <td className={`py-2.5 px-3 text-right border-r border-black/[0.04] font-bold ${
+                              <td className={`py-2.5 px-3 text-right border-r border-neutral-100 font-bold ${
                                 isProfitPositive ? 'text-emerald-700' : 'text-rose-600'
                               }`}>
                                 {b.margin.toFixed(1)}%
@@ -1270,7 +1270,7 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
                               <td className="py-2.5 px-3 text-center">
                                 <button
                                   onClick={() => setExpandedProfitRowId(isExpanded ? null : b.id)}
-                                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-sans font-medium border border-black/10 hover:bg-black hover:text-white transition-all cursor-pointer"
+                                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-sans font-medium border border-neutral-200 hover:bg-neutral-100 text-neutral-800 transition-all cursor-pointer"
                                 >
                                   <span>{isExpanded ? 'Hide' : 'Items'}</span>
                                   <ChevronRight className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
@@ -1280,15 +1280,15 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
 
                             {/* Itemized Bill Breakdown */}
                             {isExpanded && (
-                              <tr className="bg-[#fcfcfd]">
-                                <td colSpan={9} className="p-4 border-b border-black/[0.08]">
-                                  <div className="bg-white rounded-xl border border-black/[0.08] p-3 shadow-2xs">
-                                    <div className="text-[11px] font-semibold text-black mb-2">
+                              <tr className="bg-neutral-50/50">
+                                <td colSpan={9} className="p-4 border-b border-neutral-200">
+                                  <div className="bg-white rounded-xl border border-neutral-200 p-3 shadow-2xs">
+                                    <div className="text-[11px] font-semibold text-neutral-900 mb-2">
                                       Line Items for Invoice #{b.invoiceNumber}
                                     </div>
                                     <table className="w-full text-left text-xs border-collapse">
                                       <thead>
-                                        <tr className="border-b border-black/[0.04] text-[9px] text-[#86868b] uppercase tracking-wider">
+                                        <tr className="border-b border-neutral-200 text-[9px] text-neutral-500 uppercase tracking-wider">
                                           <th className="py-1.5 px-2">Item Name</th>
                                           <th className="py-1.5 px-2 text-center">Qty</th>
                                           <th className="py-1.5 px-2 text-right">Sale Price</th>
@@ -1297,18 +1297,18 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
                                           <th className="py-1.5 px-2 text-right">Item Profit</th>
                                         </tr>
                                       </thead>
-                                      <tbody className="divide-y divide-black/[0.03] font-mono text-[10px]">
+                                      <tbody className="divide-y divide-neutral-100 font-mono text-[10px]">
                                         {b.items.map((it, iIdx) => {
                                           const costRate = it.purchasePrice || (it.salePrice * 0.7);
                                           const totalCost = costRate * it.qty;
                                           const itemProfit = it.total - totalCost;
                                           return (
-                                            <tr key={iIdx} className="hover:bg-black/[0.01]">
-                                              <td className="py-1.5 px-2 font-sans font-medium text-black">{it.name}</td>
-                                              <td className="py-1.5 px-2 text-center text-black">{it.qty} {it.unit || 'Pcs'}</td>
+                                            <tr key={iIdx} className="hover:bg-neutral-50/60">
+                                              <td className="py-1.5 px-2 font-sans font-medium text-neutral-900">{it.name}</td>
+                                              <td className="py-1.5 px-2 text-center text-neutral-900">{it.qty} {it.unit || 'Pcs'}</td>
                                               <td className="py-1.5 px-2 text-right text-neutral-700">{formatINR(it.salePrice)}</td>
                                               <td className="py-1.5 px-2 text-right text-neutral-500">{formatINR(costRate)}</td>
-                                              <td className="py-1.5 px-2 text-right font-medium text-black">{formatINR(it.total)}</td>
+                                              <td className="py-1.5 px-2 text-right font-medium text-neutral-900">{formatINR(it.total)}</td>
                                               <td className={`py-1.5 px-2 text-right font-bold ${itemProfit >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>
                                                 {itemProfit >= 0 ? '+' : ''}{formatINR(itemProfit)}
                                               </td>
@@ -1340,10 +1340,10 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-semibold tracking-tight text-black uppercase">
+              <h2 className="text-base font-semibold tracking-tight text-neutral-900 uppercase">
                 Bank Statement & UPI Passbook
               </h2>
-              <p className="text-[11px] text-[#86868b]">
+              <p className="text-[11px] text-neutral-500">
                 {settings.bankName || 'State Bank of India'} • A/C: {settings.accountNumber || '382001092834'}
               </p>
             </div>
@@ -1352,37 +1352,37 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl border border-black/[0.08] shadow-xs overflow-hidden">
+          <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[#fafafa] text-[#86868b] font-semibold border-b border-black/[0.06] text-[10px] tracking-wider uppercase">
-                  <th className="py-2.5 px-4 border-r border-black/[0.04]">Date</th>
-                  <th className="py-2.5 px-4 border-r border-black/[0.04]">Particulars / Counterparty</th>
-                  <th className="py-2.5 px-3 border-r border-black/[0.04]">Ref / Bill No</th>
-                  <th className="py-2.5 px-3 border-r border-black/[0.04]">Mode</th>
-                  <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">Withdrawal / Debit (-)</th>
+                <tr className="bg-neutral-50/80 text-neutral-600 font-semibold border-b border-neutral-200/80 text-[10px] tracking-wider uppercase">
+                  <th className="py-2.5 px-4 border-r border-neutral-200/60">Date</th>
+                  <th className="py-2.5 px-4 border-r border-neutral-200/60">Particulars / Counterparty</th>
+                  <th className="py-2.5 px-3 border-r border-neutral-200/60">Ref / Bill No</th>
+                  <th className="py-2.5 px-3 border-r border-neutral-200/60">Mode</th>
+                  <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">Withdrawal / Debit (-)</th>
                   <th className="py-2.5 px-4 text-right">Deposit / Credit (+)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/[0.04] font-mono text-[11px]">
+              <tbody className="divide-y divide-neutral-100 font-mono text-[11px]">
                 {bankStatementEntries.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-[#86868b] font-sans">
+                    <td colSpan={6} className="py-8 text-center text-neutral-500 font-sans">
                       No bank or UPI transactions found for this date range.
                     </td>
                   </tr>
                 ) : (
                   bankStatementEntries.map((b) => (
-                    <tr key={b.id} className="hover:bg-black/[0.02]">
-                      <td className="py-2 px-4 border-r border-black/[0.04] text-[#86868b]">{formatDate(b.date)}</td>
-                      <td className="py-2 px-4 border-r border-black/[0.04] font-sans font-semibold text-black">{b.particulars}</td>
-                      <td className="py-2 px-3 border-r border-black/[0.04] text-[#86868b]">{b.ref}</td>
-                      <td className="py-2 px-3 border-r border-black/[0.04]">
-                        <span className="px-2 py-0.5 rounded bg-neutral-100 text-neutral-700 font-mono text-[10px]">
+                    <tr key={b.id} className="hover:bg-neutral-50/70 transition-colors">
+                      <td className="py-2 px-4 border-r border-neutral-100 text-neutral-500">{formatDate(b.date)}</td>
+                      <td className="py-2 px-4 border-r border-neutral-100 font-sans font-semibold text-neutral-900">{b.particulars}</td>
+                      <td className="py-2 px-3 border-r border-neutral-100 text-neutral-500">{b.ref}</td>
+                      <td className="py-2 px-3 border-r border-neutral-100">
+                        <span className="px-2 py-0.5 rounded bg-neutral-100 text-neutral-700 font-mono text-[10px] border border-neutral-200">
                           {b.mode}
                         </span>
                       </td>
-                      <td className="py-2 px-3 text-right border-r border-black/[0.04] text-red-600 font-bold">
+                      <td className="py-2 px-3 text-right border-r border-neutral-100 text-rose-600 font-bold">
                         {b.debit > 0 ? `-${formatINR(b.debit)}` : '—'}
                       </td>
                       <td className="py-2 px-4 text-right text-emerald-700 font-bold">
@@ -1405,59 +1405,59 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
         <div className="space-y-6">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold tracking-tight text-black uppercase">
+              <h2 className="text-base font-semibold tracking-tight text-neutral-900 uppercase">
                 GSTR-1 Outward Supplies Report
               </h2>
-              <span className="text-[11px] text-[#86868b]">
-                Rule 59 CGST Rules • GSTIN: <span className="font-mono font-medium text-black">{settings.gstin}</span>
+              <span className="text-[11px] text-neutral-500">
+                Rule 59 CGST Rules • GSTIN: <span className="font-mono font-medium text-neutral-900">{settings.gstin}</span>
               </span>
             </div>
 
             {/* Aggregated Total Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              <div className="p-3.5 bg-white rounded-2xl border border-black/[0.06] shadow-2xs">
-                <span className="text-[10px] text-[#86868b] font-medium block">Total Invoices</span>
-                <span className="text-base font-bold font-mono text-black">{filteredInvoices.length} Bills</span>
+              <div className="p-3.5 bg-white rounded-2xl border border-neutral-200/80 shadow-xs">
+                <span className="text-[10px] text-neutral-500 font-medium block">Total Invoices</span>
+                <span className="text-base font-bold font-mono text-neutral-900">{filteredInvoices.length} Bills</span>
               </div>
-              <div className="p-3.5 bg-white rounded-2xl border border-black/[0.06] shadow-2xs">
-                <span className="text-[10px] text-[#86868b] font-medium block">Taxable Value</span>
-                <span className="text-base font-bold font-mono text-black">{formatINR(totalTaxableValue)}</span>
+              <div className="p-3.5 bg-white rounded-2xl border border-neutral-200/80 shadow-xs">
+                <span className="text-[10px] text-neutral-500 font-medium block">Taxable Value</span>
+                <span className="text-base font-bold font-mono text-neutral-900">{formatINR(totalTaxableValue)}</span>
               </div>
-              <div className="p-3.5 bg-white rounded-2xl border border-black/[0.06] shadow-2xs">
-                <span className="text-[10px] text-[#86868b] font-medium block">Central Tax (CGST)</span>
-                <span className="text-base font-bold font-mono text-black">{formatINR(totalCgst)}</span>
+              <div className="p-3.5 bg-white rounded-2xl border border-neutral-200/80 shadow-xs">
+                <span className="text-[10px] text-neutral-500 font-medium block">Central Tax (CGST)</span>
+                <span className="text-base font-bold font-mono text-neutral-900">{formatINR(totalCgst)}</span>
               </div>
-              <div className="p-3.5 bg-white rounded-2xl border border-black/[0.06] shadow-2xs">
-                <span className="text-[10px] text-[#86868b] font-medium block">State Tax (SGST)</span>
-                <span className="text-base font-bold font-mono text-black">{formatINR(totalSgst)}</span>
+              <div className="p-3.5 bg-white rounded-2xl border border-neutral-200/80 shadow-xs">
+                <span className="text-[10px] text-neutral-500 font-medium block">State Tax (SGST)</span>
+                <span className="text-base font-bold font-mono text-neutral-900">{formatINR(totalSgst)}</span>
               </div>
-              <div className="p-3.5 bg-white rounded-2xl border border-black/[0.06] shadow-2xs">
-                <span className="text-[10px] text-[#86868b] font-medium block">Gross Total</span>
-                <span className="text-base font-bold font-mono text-black">{formatINR(totalInvoiceValue)}</span>
+              <div className="p-3.5 bg-white rounded-2xl border border-neutral-200/80 shadow-xs">
+                <span className="text-[10px] text-neutral-500 font-medium block">Gross Total</span>
+                <span className="text-base font-bold font-mono text-neutral-900">{formatINR(totalInvoiceValue)}</span>
               </div>
             </div>
 
             {/* Invoices Table */}
-            <div className="bg-white rounded-2xl border border-black/[0.08] shadow-xs overflow-hidden">
+            <div className="bg-white rounded-2xl border border-neutral-200/80 shadow-xs overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="bg-[#fafafa] text-[#86868b] font-semibold border-b border-black/[0.06] text-[10px] tracking-wider uppercase">
-                      <th className="py-2.5 px-4 border-r border-black/[0.04]">Invoice No</th>
-                      <th className="py-2.5 px-3 border-r border-black/[0.04]">Date</th>
-                      <th className="py-2.5 px-4 border-r border-black/[0.04]">Party Name</th>
-                      <th className="py-2.5 px-3 border-r border-black/[0.04]">GSTIN</th>
-                      <th className="py-2.5 px-4 text-right border-r border-black/[0.04]">Taxable (₹)</th>
-                      <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">CGST (₹)</th>
-                      <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">SGST (₹)</th>
-                      <th className="py-2.5 px-3 text-right border-r border-black/[0.04]">IGST (₹)</th>
+                    <tr className="bg-neutral-50/80 text-neutral-600 font-semibold border-b border-neutral-200/80 text-[10px] tracking-wider uppercase">
+                      <th className="py-2.5 px-4 border-r border-neutral-200/60">Invoice No</th>
+                      <th className="py-2.5 px-3 border-r border-neutral-200/60">Date</th>
+                      <th className="py-2.5 px-4 border-r border-neutral-200/60">Party Name</th>
+                      <th className="py-2.5 px-3 border-r border-neutral-200/60">GSTIN</th>
+                      <th className="py-2.5 px-4 text-right border-r border-neutral-200/60">Taxable (₹)</th>
+                      <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">CGST (₹)</th>
+                      <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">SGST (₹)</th>
+                      <th className="py-2.5 px-3 text-right border-r border-neutral-200/60">IGST (₹)</th>
                       <th className="py-2.5 px-4 text-right">Invoice Value (₹)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-black/[0.04] font-mono text-[11px]">
+                  <tbody className="divide-y divide-neutral-100 font-mono text-[11px]">
                     {filteredInvoices.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="py-8 text-center text-[#86868b] font-sans">
+                        <td colSpan={9} className="py-8 text-center text-neutral-500 font-sans">
                           No sales invoices recorded for this period.
                         </td>
                       </tr>
@@ -1466,17 +1466,17 @@ export const GstrReportsView: React.FC<GstrReportsViewProps> = ({
                         <tr
                           key={inv.id}
                           onClick={() => onSelectInvoice(inv)}
-                          className="hover:bg-black/[0.02] cursor-pointer transition-colors"
+                          className="hover:bg-neutral-50/70 cursor-pointer transition-colors"
                         >
-                          <td className="py-2.5 px-4 border-r border-black/[0.04] font-bold text-black">{inv.invoiceNumber}</td>
-                          <td className="py-2.5 px-3 border-r border-black/[0.04] text-[#86868b]">{formatDate(inv.date)}</td>
-                          <td className="py-2.5 px-4 border-r border-black/[0.04] font-sans font-medium text-black truncate max-w-xs">{inv.customer.name}</td>
-                          <td className="py-2.5 px-3 border-r border-black/[0.04] text-[#86868b]">{inv.customer.gstin || 'B2C'}</td>
-                          <td className="py-2.5 px-4 text-right border-r border-black/[0.04] text-black">{formatINR(inv.taxableTotal)}</td>
-                          <td className="py-2.5 px-3 text-right border-r border-black/[0.04] text-[#86868b]">{formatINR(inv.cgstTotal)}</td>
-                          <td className="py-2.5 px-3 text-right border-r border-black/[0.04] text-[#86868b]">{formatINR(inv.sgstTotal)}</td>
-                          <td className="py-2.5 px-3 text-right border-r border-black/[0.04] text-[#86868b]">{formatINR(inv.igstTotal)}</td>
-                          <td className="py-2.5 px-4 text-right font-bold text-black">{formatINR(inv.grandTotal)}</td>
+                          <td className="py-2.5 px-4 border-r border-neutral-100 font-bold text-neutral-900">{inv.invoiceNumber}</td>
+                          <td className="py-2.5 px-3 border-r border-neutral-100 text-neutral-500">{formatDate(inv.date)}</td>
+                          <td className="py-2.5 px-4 border-r border-neutral-100 font-sans font-medium text-neutral-900 truncate max-w-xs">{inv.customer.name}</td>
+                          <td className="py-2.5 px-3 border-r border-neutral-100 text-neutral-500">{inv.customer.gstin || 'B2C'}</td>
+                          <td className="py-2.5 px-4 text-right border-r border-neutral-100 text-neutral-900">{formatINR(inv.taxableTotal)}</td>
+                          <td className="py-2.5 px-3 text-right border-r border-neutral-100 text-neutral-500">{formatINR(inv.cgstTotal)}</td>
+                          <td className="py-2.5 px-3 text-right border-r border-neutral-100 text-neutral-500">{formatINR(inv.sgstTotal)}</td>
+                          <td className="py-2.5 px-3 text-right border-r border-neutral-100 text-neutral-500">{formatINR(inv.igstTotal)}</td>
+                          <td className="py-2.5 px-4 text-right font-bold text-neutral-900">{formatINR(inv.grandTotal)}</td>
                         </tr>
                       ))
                     )}

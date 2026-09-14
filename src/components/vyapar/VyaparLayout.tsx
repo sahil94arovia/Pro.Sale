@@ -18,8 +18,16 @@ import {
   ChevronDown,
   ChevronRight,
   Info,
+  Lock,
+  Menu,
+  X,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { BusinessSettings } from '../../types';
+import { licenseService } from '../../services/license';
+import { dbService } from '../../services/db';
+import { UpgradeToGoldModal } from '../common/UpgradeToGoldModal';
 
 export type MainNavTab =
   | 'home'
@@ -79,6 +87,9 @@ export const VyaparLayout: React.FC<VyaparLayoutProps> = ({
   onOpenAppInfo,
   children,
 }) => {
+  const [licenseState, setLicenseState] = useState(() => licenseService.getLicenseState());
+  const [userProfile, setUserProfile] = useState(() => dbService.getUserProfile());
+
   // Navigation & Submenus Definition
   interface SubMenuItem {
     id: string;
@@ -149,7 +160,15 @@ export const VyaparLayout: React.FC<VyaparLayoutProps> = ({
       { id: 'backup', label: 'Backup & Reset Data' },
     ],
     pricing: [
-      { id: 'plans', label: 'Enterprise Plan (Active)' },
+      {
+        id: 'plans',
+        label:
+          licenseState.plan === 'gold'
+            ? 'Enterprise Gold (Active)'
+            : licenseState.plan === 'silver'
+            ? 'Silver Edition (Active)'
+            : `6-Day Trial (${licenseState.trialDaysRemaining}d left)`,
+      },
     ],
   };
 
@@ -170,11 +189,29 @@ export const VyaparLayout: React.FC<VyaparLayoutProps> = ({
 
   // Keep track of strictly one accordion submenu open at a time
   const [openAccordionTab, setOpenAccordionTab] = useState<MainNavTab | null>(currentTab);
+  const [lockedFeatureModal, setLockedFeatureModal] = useState<string | null>(null);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Ensure only the active tab's accordion is open when currentTab changes
   useEffect(() => {
     setOpenAccordionTab(currentTab);
   }, [currentTab]);
+
+  useEffect(() => {
+    const handleLicenseUpdate = (e: any) => {
+      setLicenseState(e.detail?.state || licenseService.getLicenseState());
+    };
+    const handleDbUpdate = () => {
+      setUserProfile(dbService.getUserProfile());
+    };
+    window.addEventListener('prosale_license_updated', handleLicenseUpdate);
+    window.addEventListener('prosale_db_updated', handleDbUpdate);
+    return () => {
+      window.removeEventListener('prosale_license_updated', handleLicenseUpdate);
+      window.removeEventListener('prosale_db_updated', handleDbUpdate);
+    };
+  }, []);
 
   const handleTabClick = (tabId: MainNavTab) => {
     if (currentTab === tabId) {
@@ -189,7 +226,11 @@ export const VyaparLayout: React.FC<VyaparLayoutProps> = ({
       const subs = submenusMap[tabId];
       if (subs && subs.length > 0) {
         if (tabId === 'reports') {
-          setActiveReport('GSTR 1');
+          if (!licenseService.canAccessFeature('GSTR_REPORTS')) {
+            setActiveReport('Stock summary');
+          } else {
+            setActiveReport('GSTR 1');
+          }
         } else {
           setActiveSubTab(subs[0].id);
         }
@@ -203,6 +244,17 @@ export const VyaparLayout: React.FC<VyaparLayoutProps> = ({
     sub: SubMenuItem
   ) => {
     e.stopPropagation();
+
+    // Feature gating check for Silver tier
+    if (sub.isReport && sub.id.startsWith('GSTR') && !licenseService.canAccessFeature('GSTR_REPORTS')) {
+      setLockedFeatureModal('CBIC GST Reports');
+      return;
+    }
+    if (sub.id === 'barcode_generator' && !licenseService.canAccessFeature('BARCODE')) {
+      setLockedFeatureModal('Barcode Generator');
+      return;
+    }
+
     setOpenAccordionTab(tabId);
     if (currentTab !== tabId) {
       setCurrentTab(tabId);
@@ -214,17 +266,17 @@ export const VyaparLayout: React.FC<VyaparLayoutProps> = ({
     }
   };
 
-  return (
-    <div className="min-h-screen flex bg-[#f5f5f7] font-sans text-black antialiased select-none">
-      {/* ========================================================================= */}
-      {/* 1. PRIMARY LEFT SIDEBAR (Dense OLED Pitch Black #000000 with Accordions)  */}
-      {/* ========================================================================= */}
-      <aside className="w-64 bg-[#000000] text-[#86868b] flex flex-col justify-between flex-shrink-0 z-30 h-screen sticky top-0 border-r border-neutral-900 select-none">
-        <div className="flex-1 flex flex-col min-h-0">
-          {/* Logo Header: Pro.Sale Bespoke Brand Identity */}
+  const renderSidebarContent = (isMobile: boolean = false) => (
+    <div className="flex-1 flex flex-col justify-between min-h-0 h-full bg-white">
+      <div className="flex-1 flex flex-col min-h-0">
+        {/* Logo Header */}
+        <div className="px-4 py-3.5 border-b border-neutral-100 flex items-center justify-between flex-shrink-0">
           <div
-            onClick={() => onOpenAppInfo && onOpenAppInfo()}
-            className="px-4 py-3.5 border-b border-neutral-900 flex items-center space-x-3 flex-shrink-0 cursor-pointer group hover:bg-neutral-950/80 transition-colors"
+            onClick={() => {
+              if (isMobile) setIsMobileDrawerOpen(false);
+              if (onOpenAppInfo) onOpenAppInfo();
+            }}
+            className="flex items-center space-x-3 cursor-pointer group"
             title="Click to view Pro.Sale App Info & System Diagnostics"
           >
             <img
@@ -234,160 +286,225 @@ export const VyaparLayout: React.FC<VyaparLayoutProps> = ({
             />
             <div className="min-w-0">
               <div className="flex items-center space-x-1.5">
-                <span className="text-sm font-bold text-white tracking-tight">Pro<span className="text-[#38bdf8]">.</span>Sale</span>
-                <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-neutral-900 text-neutral-300 border border-neutral-800 uppercase tracking-wider">
+                <span className="text-sm font-bold text-neutral-900 tracking-tight">Pro<span className="text-[#0071e3]">.</span>Sale</span>
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-neutral-100 text-neutral-600 border border-neutral-200 uppercase tracking-wider">
                   PRO
                 </span>
               </div>
-              <span className="text-[10px] text-[#86868b] block font-sans tracking-wide truncate">Enterprise Billing OS</span>
+              <span className="text-[10px] text-neutral-500 block font-sans tracking-wide truncate">Enterprise Billing OS</span>
             </div>
           </div>
 
-          {/* Nav List with Expandable In-Line Submenus */}
-          <nav className="p-2.5 space-y-1 overflow-y-auto flex-1 text-xs font-medium custom-scrollbar">
-            {primaryNav.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentTab === item.id;
-              const isExpanded = openAccordionTab === item.id;
-              const subItems = submenusMap[item.id];
-              const hasSub = subItems && subItems.length > 0;
+          {/* Close button on mobile drawer */}
+          {isMobile && (
+            <button
+              onClick={() => setIsMobileDrawerOpen(false)}
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-800 hover:bg-neutral-100 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
 
-              return (
-                <div key={item.id} className="space-y-0.5">
-                  <button
-                    data-nav={item.id}
-                    onClick={() => handleTabClick(item.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all group text-left cursor-pointer ${
-                      isActive
-                        ? 'bg-neutral-900 text-white shadow-xs font-semibold'
-                        : 'text-[#86868b] hover:text-white hover:bg-white/[0.05]'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2.5">
-                      <Icon
-                        className={`w-4 h-4 transition-colors ${
-                          isActive ? 'text-white' : 'text-[#86868b] group-hover:text-white'
-                        }`}
-                      />
-                      <span className="text-xs">{item.label}</span>
-                    </div>
+        {/* Nav List with Expandable In-Line Submenus */}
+        <nav className="p-2.5 space-y-1 overflow-y-auto flex-1 text-xs font-medium custom-scrollbar">
+          {primaryNav.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentTab === item.id;
+            const isExpanded = openAccordionTab === item.id;
+            const subItems = submenusMap[item.id];
+            const hasSub = subItems && subItems.length > 0;
 
-                    {hasSub && (
-                      <ChevronDown
-                        className={`w-3.5 h-3.5 text-[#6e6e73] transition-transform duration-200 ${
-                          isExpanded ? 'rotate-180 text-white' : 'group-hover:text-white'
-                        }`}
-                      />
-                    )}
-                  </button>
+            return (
+              <div key={item.id} className="space-y-0.5">
+                <button
+                  data-nav={item.id}
+                  onClick={() => {
+                    handleTabClick(item.id);
+                    if (isMobile && !hasSub) setIsMobileDrawerOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-all group text-left cursor-pointer ${
+                    isActive
+                      ? 'bg-neutral-900 text-white shadow-xs font-semibold'
+                      : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <Icon
+                      className={`w-4 h-4 transition-colors ${
+                        isActive ? 'text-white' : 'text-neutral-500 group-hover:text-neutral-900'
+                      }`}
+                    />
+                    <span className="text-xs">{item.label}</span>
+                  </div>
 
-                  {/* Expandable In-Line Accordion Submenu under the option */}
-                  {isExpanded && hasSub && (
-                    <div className="ml-3 pl-3 border-l border-neutral-800/80 space-y-0.5 py-1">
-                      {subItems.map((sub) => {
-                        const isSubActive =
-                          currentTab === item.id &&
-                          (sub.isReport ? activeReport === sub.id : activeSubTab === sub.id);
-
-                        return (
-                          <button
-                            key={sub.id}
-                            data-subnav={sub.id}
-                            onClick={(e) => handleSubItemClick(e, item.id, sub)}
-                            className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] transition-all flex items-center justify-between group cursor-pointer ${
-                              isSubActive
-                                ? 'bg-neutral-800 text-white font-medium shadow-xs'
-                                : 'text-[#86868b] hover:text-white hover:bg-white/[0.04]'
-                            }`}
-                          >
-                            <span className="truncate">{sub.label}</span>
-                            {isSubActive && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-white flex-shrink-0 ml-1.5" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
+                  {hasSub && (
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                        isActive
+                          ? (isExpanded ? 'rotate-180 text-white' : 'text-white')
+                          : (isExpanded ? 'rotate-180 text-neutral-700' : 'text-neutral-400 group-hover:text-neutral-800')
+                      }`}
+                    />
                   )}
-                </div>
-              );
-            })}
-          </nav>
-        </div>
+                </button>
 
-        {/* Bottom Company Selector Card (Sleek Apple Dark Glass) */}
-        <div className="p-3 border-t border-neutral-900 mt-auto flex-shrink-0">
-          <div
-            onClick={() => {
-              setCurrentTab('settings');
-              setActiveSubTab('profile');
-            }}
-            className="p-2.5 rounded-xl bg-neutral-950 hover:bg-neutral-900 border border-neutral-900 cursor-pointer transition-colors flex items-center justify-between group"
-          >
-            <div className="flex items-center space-x-2.5 truncate">
-              <div className="w-7 h-7 rounded-lg bg-neutral-800 text-white flex items-center justify-center text-xs font-semibold uppercase flex-shrink-0">
-                {settings.firmName ? settings.firmName.charAt(0) : 'P'}
+                {/* Expandable In-Line Accordion Submenu */}
+                {isExpanded && hasSub && (
+                  <div className="ml-3 pl-3 border-l border-neutral-200 space-y-0.5 py-1">
+                    {subItems.map((sub) => {
+                      const isSubActive =
+                        currentTab === item.id &&
+                        (sub.isReport ? activeReport === sub.id : activeSubTab === sub.id);
+
+                      return (
+                        <button
+                          key={sub.id}
+                          data-subnav={sub.id}
+                          onClick={(e) => {
+                            handleSubItemClick(e, item.id, sub);
+                            if (isMobile) setIsMobileDrawerOpen(false);
+                          }}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] transition-all flex items-center justify-between group cursor-pointer ${
+                            isSubActive
+                              ? 'bg-neutral-100 text-neutral-900 font-semibold shadow-2xs'
+                              : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50'
+                          }`}
+                        >
+                          <span className="truncate">{sub.label}</span>
+                          {isSubActive && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-neutral-900 flex-shrink-0 ml-1.5" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-              <div className="truncate">
-                <p className="text-[11px] font-medium text-white truncate">{settings.firmName || 'Pro.Sale'}</p>
-                <p className="text-[9px] text-[#86868b] truncate">GST: {settings.gstin || 'Unregistered'}</p>
-              </div>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Bottom Company Selector Card */}
+      <div className="p-3 border-t border-neutral-100 mt-auto flex-shrink-0">
+        <div
+          onClick={() => {
+            if (isMobile) setIsMobileDrawerOpen(false);
+            setCurrentTab('settings');
+            setActiveSubTab('profile');
+          }}
+          className="p-2.5 rounded-xl bg-neutral-50 hover:bg-neutral-100 border border-neutral-200/80 cursor-pointer transition-colors flex items-center justify-between group"
+        >
+          <div className="flex items-center space-x-2.5 truncate">
+            <div className="w-7 h-7 rounded-lg bg-neutral-900 text-white flex items-center justify-center text-xs font-semibold uppercase flex-shrink-0">
+              {userProfile?.name ? userProfile.name.charAt(0) : settings.firmName ? settings.firmName.charAt(0) : 'P'}
             </div>
-            <ChevronRight className="w-3.5 h-3.5 text-[#6e6e73] group-hover:text-white transition-colors flex-shrink-0" />
+            <div className="truncate">
+              <p className="text-[11px] font-medium text-neutral-900 truncate">
+                {userProfile?.name ? `${userProfile.name} (${userProfile.role || 'Admin'})` : settings.firmName || 'Pro.Sale Operator'}
+              </p>
+              <p className="text-[9px] text-neutral-500 truncate">
+                {settings.firmName || 'Local Workstation'} {settings.gstin ? `• ${settings.gstin}` : ''}
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-3.5 h-3.5 text-neutral-400 group-hover:text-neutral-800 transition-colors flex-shrink-0" />
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen flex bg-[#f5f5f7] font-sans text-neutral-900 antialiased select-none relative">
+      {/* Mobile Slide-Over Drawer */}
+      {isMobileDrawerOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex animate-fade-in">
+          <div
+            onClick={() => setIsMobileDrawerOpen(false)}
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+          />
+          <div className="relative w-72 max-w-[85vw] bg-white text-neutral-800 h-full z-10 flex flex-col justify-between shadow-2xl border-r border-neutral-200 animate-in slide-in-from-left duration-200">
+            {renderSidebarContent(true)}
           </div>
         </div>
+      )}
+
+      {/* Primary Desktop / Tablet Sidebar (Collapsible on iPad) */}
+      <aside
+        className={`bg-white text-neutral-700 flex flex-col justify-between flex-shrink-0 z-30 h-screen sticky top-0 transition-all duration-200 select-none ${
+          isSidebarCollapsed ? 'hidden' : 'hidden md:flex md:w-64 border-r border-neutral-200/80'
+        }`}
+      >
+        {renderSidebarContent(false)}
       </aside>
 
-      {/* ========================================================================= */}
-      {/* 2. EXPANDED MAIN WORKSPACE SCREEN (Full-Width, Spacious Apple Monochrome) */}
-      {/* ========================================================================= */}
+      {/* Main Workspace Screen */}
       <div className="flex-1 flex flex-col min-w-0 bg-[#f5f5f7]">
         {/* Top Header Action Bar */}
-        <header className="h-14 bg-white border-b border-black/[0.06] px-6 flex items-center justify-between z-10 shadow-2xs">
-          <div className="flex items-center space-x-2">
-            <span className="text-xs font-semibold text-[#86868b] uppercase tracking-wider">
+        <header className="h-14 bg-white/80 backdrop-blur-xl border-b border-neutral-200/80 px-3 sm:px-6 flex items-center justify-between z-10 sticky top-0 shadow-2xs">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            {/* Mobile Menu Drawer Toggle */}
+            <button
+              onClick={() => setIsMobileDrawerOpen(true)}
+              className="md:hidden p-1.5 rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 cursor-pointer transition-colors"
+              title="Open Menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            {/* Tablet/Desktop Sidebar Toggle Button */}
+            <button
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="hidden md:flex p-1.5 rounded-lg text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 transition-colors cursor-pointer"
+              title={isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            >
+              {isSidebarCollapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+            </button>
+
+            <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
               {currentTab.toUpperCase()}
             </span>
             {currentTab === 'reports' ? (
               <>
-                <span className="text-black/20">/</span>
-                <span className="text-xs font-semibold text-black">{activeReport}</span>
+                <span className="text-neutral-300">/</span>
+                <span className="text-xs font-semibold text-neutral-900 truncate max-w-[130px] sm:max-w-none">{activeReport}</span>
               </>
             ) : (
               <>
-                <span className="text-black/20">/</span>
-                <span className="text-xs font-semibold text-black capitalize">
+                <span className="text-neutral-300">/</span>
+                <span className="text-xs font-semibold text-neutral-900 capitalize truncate max-w-[130px] sm:max-w-none">
                   {activeSubTab.replace('_', ' ')}
                 </span>
               </>
             )}
           </div>
 
-          {/* Right Action Buttons (Apple Monochrome: Dense OLED Black & Crisp White) */}
-          <div className="flex items-center space-x-2.5">
+          {/* Right Action Buttons */}
+          <div className="flex items-center space-x-1.5 sm:space-x-2.5">
             {/* Add Sale Button */}
             <button
               onClick={onOpenAddSale}
-              className="flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-black hover:bg-neutral-900 text-white font-medium text-xs shadow-xs transition-all active:scale-95 cursor-pointer"
+              className="flex items-center space-x-1 sm:space-x-1.5 px-3 sm:px-4 py-1.5 rounded-full bg-black hover:bg-neutral-800 text-white font-semibold text-xs shadow-xs transition-all active:scale-95 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 text-white" />
               <span>Add Sale</span>
             </button>
 
-            {/* Add Purchase Button */}
+            {/* Add Purchase Button (Responsive) */}
             <button
               onClick={onOpenAddPurchase}
-              className="flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-white hover:bg-neutral-50 text-black font-medium text-xs border border-black/15 shadow-2xs transition-all active:scale-95 cursor-pointer"
+              className="hidden sm:flex items-center space-x-1.5 px-4 py-1.5 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-medium text-xs border border-neutral-200 shadow-2xs transition-all active:scale-95 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-black" />
+              <Plus className="w-3.5 h-3.5 text-neutral-600" />
               <span>Add Purchase</span>
             </button>
 
-            {/* Print icon */}
+            {/* Print icon (Desktop/Tablet) */}
             <button
               onClick={() => window.print()}
               title="Print Screen"
-              className="p-1.5 text-[#86868b] hover:text-black transition-colors cursor-pointer"
+              className="hidden sm:block p-1.5 text-neutral-400 hover:text-neutral-800 transition-colors cursor-pointer"
             >
               <Printer className="w-4 h-4" />
             </button>
@@ -397,26 +514,93 @@ export const VyaparLayout: React.FC<VyaparLayoutProps> = ({
               <button
                 onClick={onOpenAppInfo}
                 title="Pro.Sale App Info & System Diagnostics"
-                className="p-1.5 text-[#86868b] hover:text-black transition-colors cursor-pointer"
+                className="p-1.5 text-neutral-400 hover:text-neutral-800 transition-colors cursor-pointer"
               >
                 <Info className="w-4 h-4" />
               </button>
             )}
 
-            {/* More options (Settings shortcut) */}
+            {/* Settings shortcut */}
             <button
               onClick={() => setCurrentTab('settings')}
               title="Settings"
-              className="p-1.5 text-[#86868b] hover:text-black transition-colors cursor-pointer"
+              className="p-1.5 text-neutral-400 hover:text-neutral-800 transition-colors cursor-pointer"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
           </div>
         </header>
 
-        {/* Dynamic Main Pane Body */}
-        <main className="p-6 flex-1 overflow-y-auto bg-[#f5f5f7]">{children}</main>
+        {/* Dynamic Main Pane Body (Adaptive Padding for Mobile/Tablet/Laptop) */}
+        <main className="p-3 sm:p-5 md:p-6 pb-24 md:pb-8 flex-1 overflow-y-auto bg-[#f5f5f7] text-neutral-900">{children}</main>
+
+        {/* Mobile Bottom Navigation Bar (Apple iOS Native Style) */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-t border-neutral-200/80 px-2 py-1.5 flex items-center justify-around shadow-lg">
+          <button
+            onClick={() => setCurrentTab('home')}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
+              currentTab === 'home' ? 'text-black font-bold' : 'text-neutral-400 hover:text-neutral-700'
+            }`}
+          >
+            <Home className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Home</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setCurrentTab('sale');
+              setActiveSubTab('invoices');
+            }}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
+              currentTab === 'sale' ? 'text-black font-bold' : 'text-neutral-400 hover:text-neutral-700'
+            }`}
+          >
+            <Receipt className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Sales</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setCurrentTab('parties');
+              setActiveSubTab('all_parties');
+            }}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
+              currentTab === 'parties' ? 'text-black font-bold' : 'text-neutral-400 hover:text-neutral-700'
+            }`}
+          >
+            <Users className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Parties</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setCurrentTab('items');
+              setActiveSubTab('all_items');
+            }}
+            className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all cursor-pointer ${
+              currentTab === 'items' ? 'text-black font-bold' : 'text-neutral-400 hover:text-neutral-700'
+            }`}
+          >
+            <Package className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Items</span>
+          </button>
+
+          <button
+            onClick={() => setIsMobileDrawerOpen(true)}
+            className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-neutral-400 hover:text-black transition-all cursor-pointer"
+          >
+            <Menu className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5 font-medium">More</span>
+          </button>
+        </nav>
       </div>
+
+      {/* Feature Gating Modal for Silver Tier */}
+      <UpgradeToGoldModal
+        isOpen={!!lockedFeatureModal}
+        onClose={() => setLockedFeatureModal(null)}
+        featureName={lockedFeatureModal || ''}
+      />
     </div>
   );
 };

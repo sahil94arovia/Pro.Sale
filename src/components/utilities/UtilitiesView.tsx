@@ -56,6 +56,7 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
   const [customMrp, setCustomMrp] = useState(120);
   const [labelCopies, setLabelCopies] = useState(24);
   const [labelGrid, setLabelGrid] = useState<'24_A4' | '40_A4' | 'SINGLE_THERMAL'>('24_A4');
+  const [barcodeInnerHtml, setBarcodeInnerHtml] = useState<string>('');
   const barcodeSvgRef = useRef<SVGSVGElement>(null);
 
   // Import State
@@ -90,6 +91,7 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
           font: 'monospace',
           margin: 0,
         });
+        setBarcodeInnerHtml(barcodeSvgRef.current.innerHTML);
       } catch (e) {
         console.error('Barcode generation error:', e);
       }
@@ -214,12 +216,12 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16 font-sans text-xs text-black">
+    <div className="space-y-6 max-w-7xl mx-auto pb-16 font-sans text-xs text-neutral-900">
       {/* Top Header & Tab Switcher */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-black/[0.06]">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-neutral-200/80">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-2xl bg-neutral-900 text-white flex items-center justify-center font-bold shadow-2xs">
-            <Wrench className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-2xl bg-white border border-neutral-200 text-neutral-900 flex items-center justify-center font-bold shadow-xs">
+            <Wrench className="w-5 h-5 text-amber-500" />
           </div>
           <div>
             <h1 className="text-base font-bold text-neutral-900 tracking-tight leading-tight">
@@ -232,14 +234,14 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
         </div>
 
         {/* Clean Segmented Controls */}
-        <div className="flex items-center bg-neutral-200/60 p-1 rounded-2xl border border-neutral-200">
+        <div className="flex items-center bg-neutral-100 p-1 rounded-2xl border border-neutral-200/60">
           <button
             type="button"
             onClick={() => setActiveTab('barcode')}
             className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'barcode'
-                ? 'bg-white text-black shadow-xs'
-                : 'text-neutral-600 hover:text-black'
+                ? 'bg-white text-neutral-900 shadow-xs'
+                : 'text-neutral-600 hover:text-neutral-900'
             }`}
           >
             <Barcode className="w-4 h-4" />
@@ -251,8 +253,8 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
             onClick={() => setActiveTab('import')}
             className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'import'
-                ? 'bg-white text-black shadow-xs'
-                : 'text-neutral-600 hover:text-black'
+                ? 'bg-white text-neutral-900 shadow-xs'
+                : 'text-neutral-600 hover:text-neutral-900'
             }`}
           >
             <FileSpreadsheet className="w-4 h-4" />
@@ -267,9 +269,9 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
       {activeTab === 'barcode' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Controls Column */}
-          <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-4">
-            <h2 className="text-sm font-bold text-neutral-900 pb-2 border-b border-neutral-100 flex items-center space-x-2">
-              <Barcode className="w-4 h-4 text-black" />
+          <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
+            <h2 className="text-sm font-bold text-neutral-900 pb-2 border-b border-neutral-200/60 flex items-center space-x-2">
+              <Barcode className="w-4 h-4 text-neutral-800" />
               <span>Label Configuration</span>
             </h2>
 
@@ -281,11 +283,11 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
               <select
                 value={selectedProductId}
                 onChange={(e) => setSelectedProductId(e.target.value)}
-                className="w-full p-2.5 rounded-xl border border-neutral-200 bg-neutral-50 font-bold"
+                className="w-full p-2.5 rounded-xl border border-neutral-200 bg-white text-neutral-900 font-bold focus:outline-none focus:border-black"
               >
-                <option value="">-- Custom Label --</option>
+                <option value="" className="bg-white text-neutral-900">-- Custom Label --</option>
                 {products.map((p) => (
-                  <option key={p.id} value={p.id}>
+                  <option key={p.id} value={p.id} className="bg-white text-neutral-900">
                     {p.name} ({formatINR(p.salePrice)})
                   </option>
                 ))}
@@ -298,7 +300,7 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
                 type="text"
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
-                className="w-full p-2.5 rounded-xl border border-neutral-200 bg-neutral-50 font-semibold"
+                className="w-full p-2.5 rounded-xl border border-neutral-200 bg-white text-neutral-900 font-semibold focus:outline-none focus:border-black"
               />
             </div>
 
@@ -308,7 +310,7 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
                 type="text"
                 value={customBarcode}
                 onChange={(e) => setCustomBarcode(e.target.value)}
-                className="w-full p-2.5 rounded-xl border border-neutral-200 bg-neutral-50 font-mono font-bold"
+                className="w-full p-2.5 rounded-xl border border-neutral-200 bg-white text-neutral-900 font-mono font-bold focus:outline-none focus:border-black"
               />
             </div>
 
@@ -319,7 +321,7 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
                   type="number"
                   value={customMrp}
                   onChange={(e) => setCustomMrp(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-xl border border-neutral-200 bg-neutral-50 font-mono font-bold"
+                  className="w-full p-2.5 rounded-xl border border-neutral-200 bg-white text-neutral-900 font-mono font-bold focus:outline-none focus:border-black"
                 />
               </div>
 
@@ -329,7 +331,7 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
                   type="number"
                   value={customPrice}
                   onChange={(e) => setCustomPrice(Number(e.target.value))}
-                  className="w-full p-2.5 rounded-xl border border-neutral-200 bg-neutral-50 font-mono font-bold text-emerald-700"
+                  className="w-full p-2.5 rounded-xl border border-neutral-200 bg-white text-emerald-700 font-mono font-bold focus:outline-none focus:border-black"
                 />
               </div>
             </div>
@@ -345,11 +347,11 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
                   else if (g === '40_A4') setLabelCopies(40);
                   else setLabelCopies(1);
                 }}
-                className="w-full p-2.5 rounded-xl border border-neutral-200 bg-neutral-50 font-bold"
+                className="w-full p-2.5 rounded-xl border border-neutral-200 bg-white text-neutral-900 font-bold focus:outline-none focus:border-black"
               >
-                <option value="24_A4">24 Labels / A4 Sheet (3 x 8 grid - 70x37mm)</option>
-                <option value="40_A4">40 Labels / A4 Sheet (4 x 10 grid - 52.5x29.7mm)</option>
-                <option value="SINGLE_THERMAL">Single Thermal Sticker (50x25mm)</option>
+                <option value="24_A4" className="bg-white text-neutral-900">24 Labels / A4 Sheet (3 x 8 grid - 70x37mm)</option>
+                <option value="40_A4" className="bg-white text-neutral-900">40 Labels / A4 Sheet (4 x 10 grid - 52.5x29.7mm)</option>
+                <option value="SINGLE_THERMAL" className="bg-white text-neutral-900">Single Thermal Sticker (50x25mm)</option>
               </select>
             </div>
 
@@ -361,14 +363,14 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
                 max={120}
                 value={labelCopies}
                 onChange={(e) => setLabelCopies(Number(e.target.value))}
-                className="w-full p-2.5 rounded-xl border border-neutral-200 bg-neutral-50 font-mono font-bold text-center"
+                className="w-full p-2.5 rounded-xl border border-neutral-200 bg-white text-neutral-900 font-mono font-bold text-center focus:outline-none focus:border-black"
               />
             </div>
 
             <button
               type="button"
               onClick={handlePrintLabels}
-              className="w-full py-3 bg-neutral-900 hover:bg-black text-white rounded-xl font-bold text-xs flex items-center justify-center space-x-2 cursor-pointer shadow-2xs transition-all active:scale-95"
+              className="w-full py-3 bg-black hover:bg-neutral-800 text-white rounded-xl font-bold text-xs flex items-center justify-center space-x-2 cursor-pointer shadow-xs transition-all active:scale-95"
             >
               <Printer className="w-4 h-4" />
               <span>Print Sticker Sheet</span>
@@ -376,8 +378,8 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
           </div>
 
           {/* Right Live Sheet Preview Column */}
-          <div className="lg:col-span-2 p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+          <div className="lg:col-span-2 p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-neutral-200/60">
               <h3 className="text-sm font-bold text-neutral-900">
                 Sticker Sheet Live Preview ({labelCopies} labels)
               </h3>
@@ -393,7 +395,7 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
 
             {/* Grid preview */}
             <div
-              className={`p-4 bg-neutral-50 rounded-2xl border border-neutral-200 max-h-[600px] overflow-y-auto ${
+              className={`p-4 bg-neutral-100 rounded-2xl border border-neutral-200/80 max-h-[600px] overflow-y-auto ${
                 labelGrid === 'SINGLE_THERMAL'
                   ? 'flex justify-center'
                   : labelGrid === '40_A4'
@@ -404,7 +406,7 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
               {Array.from({ length: labelCopies }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="p-2.5 bg-white rounded-xl border border-neutral-300 flex flex-col items-center justify-between text-center space-y-1 shadow-2xs"
+                  className="p-2.5 bg-white rounded-xl border border-neutral-200 flex flex-col items-center justify-between text-center space-y-1 shadow-xs"
                 >
                   <span className="text-[9px] font-bold text-neutral-500 truncate max-w-full uppercase">
                     {settings.firmName}
@@ -416,7 +418,7 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
                   <div className="py-1 w-full flex justify-center overflow-hidden">
                     <svg
                       dangerouslySetInnerHTML={{
-                        __html: barcodeSvgRef.current?.innerHTML || '',
+                        __html: barcodeInnerHtml,
                       }}
                       className="max-h-12 w-auto max-w-full"
                     />
@@ -424,7 +426,7 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
 
                   <div className="flex items-center justify-between w-full text-[10px] pt-1 border-t border-neutral-100 font-mono">
                     <span className="text-neutral-400 line-through">MRP: ₹{customMrp}</span>
-                    <span className="font-bold text-black">₹{customPrice}</span>
+                    <span className="font-bold text-neutral-900">₹{customPrice}</span>
                   </div>
                 </div>
               ))}
@@ -438,9 +440,9 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
       {/* ========================================================================= */}
       {activeTab === 'import' && (
         <div className="max-w-4xl space-y-6">
-          <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-apple-subtle space-y-4">
-            <div className="flex items-center space-x-2 pb-2 border-b border-neutral-100">
-              <FileSpreadsheet className="w-5 h-5 text-neutral-900" />
+          <div className="p-6 bg-white rounded-3xl border border-neutral-200/80 shadow-xs space-y-4">
+            <div className="flex items-center space-x-2 pb-2 border-b border-neutral-200/60">
+              <FileSpreadsheet className="w-5 h-5 text-neutral-800" />
               <div>
                 <h2 className="text-sm font-bold text-neutral-900">Bulk Import via CSV Spreadsheet</h2>
                 <p className="text-[11px] text-neutral-500">
@@ -475,7 +477,7 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
             </div>
 
             {/* Download Sample Box */}
-            <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="p-4 bg-neutral-50 rounded-2xl border border-neutral-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
                 <h4 className="font-bold text-neutral-900">
                   Step 1: Download Sample Excel / CSV Format
@@ -492,9 +494,9 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
                     ? handleDownloadSampleProductsCSV
                     : handleDownloadSampleCustomersCSV
                 }
-                className="px-4 py-2 bg-white hover:bg-neutral-100 border border-neutral-300 rounded-xl font-bold text-xs flex items-center space-x-2 transition-all cursor-pointer shadow-2xs"
+                className="px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl font-bold text-xs flex items-center space-x-2 transition-all cursor-pointer shadow-xs"
               >
-                <Download className="w-4 h-4 text-[#0071e3]" />
+                <Download className="w-4 h-4 text-white" />
                 <span>
                   Download Sample {importType === 'PRODUCTS' ? 'Products' : 'Parties'} CSV
                 </span>
@@ -502,7 +504,7 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
             </div>
 
             {/* Upload CSV Box */}
-            <div className="p-6 bg-white rounded-2xl border-2 border-dashed border-neutral-300 text-center space-y-3">
+            <div className="p-6 bg-neutral-50 rounded-2xl border-2 border-dashed border-neutral-300 text-center space-y-3">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -523,22 +525,22 @@ export const UtilitiesView: React.FC<UtilitiesViewProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="px-6 py-2.5 bg-neutral-900 hover:bg-black text-white rounded-xl font-bold text-xs cursor-pointer shadow-2xs transition-all active:scale-95"
+                className="px-6 py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl font-bold text-xs cursor-pointer shadow-xs transition-all active:scale-95"
               >
                 Choose CSV File...
               </button>
             </div>
 
             {importStatus && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl flex items-center space-x-2 font-medium">
+              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl flex items-center space-x-2 font-medium">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>{importStatus}</span>
               </div>
             )}
 
             {importError && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-800 rounded-xl flex items-center space-x-2 font-medium">
-                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl flex items-center space-x-2 font-medium">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                 <span>{importError}</span>
               </div>
             )}
