@@ -1,9 +1,13 @@
 apply plugin: 'com.android.application'
 
-def keystorePropertiesFile = file("keystore.properties")
+def keystorePropertiesFile = file("../keystore.properties")
 if (!keystorePropertiesFile.exists()) {
     keystorePropertiesFile = rootProject.file("keystore.properties")
 }
+if (!keystorePropertiesFile.exists()) {
+    keystorePropertiesFile = file("keystore.properties")
+}
+
 def keystoreProperties = new Properties()
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
@@ -28,17 +32,21 @@ android {
     signingConfigs {
         release {
             if (keystorePropertiesFile.exists()) {
-                def storeFilePath = keystoreProperties['storeFile']
-                if (storeFilePath) {
-                    if (storeFilePath.startsWith("~/")) {
-                        storeFilePath = System.getProperty("user.home") + storeFilePath.substring(1)
-                    }
-                    def sFile = file(storeFilePath)
-                    if (!sFile.exists()) {
-                        sFile = rootProject.file(storeFilePath)
-                    }
-                    storeFile sFile
+                def rawStorePath = keystoreProperties['storeFile'] ?: keystoreProperties['SsstoreFile']
+                if (!rawStorePath) {
+                    throw new GradleException("Release build failed: 'storeFile' property is missing in ${keystorePropertiesFile.absolutePath}")
                 }
+                if (rawStorePath.startsWith("~/")) {
+                    rawStorePath = System.getProperty("user.home") + rawStorePath.substring(1)
+                }
+                def resolvedFile = new File(rawStorePath)
+                if (!resolvedFile.isAbsolute()) {
+                    resolvedFile = new File(keystorePropertiesFile.parentFile, rawStorePath)
+                }
+                if (!resolvedFile.exists()) {
+                    throw new GradleException("Release build failed: keystore file not found at ${resolvedFile.absolutePath}")
+                }
+                storeFile resolvedFile
                 storePassword keystoreProperties['storePassword']
                 keyAlias keystoreProperties['keyAlias']
                 keyPassword keystoreProperties['keyPassword']
@@ -51,6 +59,8 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             if (keystorePropertiesFile.exists()) {
                 signingConfig signingConfigs.release
+            } else {
+                throw new GradleException("Release build failed: Keystore configuration not found. Please create 'android/keystore.properties' containing storeFile, storePassword, keyAlias, and keyPassword.")
             }
         }
     }
